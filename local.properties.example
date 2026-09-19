@@ -1,0 +1,6 @@
+# Copy this file to "local.properties" (same folder) and edit the paths for your machine.
+# Android Studio creates local.properties automatically the first time you open the project,
+# so in most cases you do NOT need to touch this file manually.
+
+sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
+flutter.sdk=/Users/YOUR_USERNAME/development/flutter

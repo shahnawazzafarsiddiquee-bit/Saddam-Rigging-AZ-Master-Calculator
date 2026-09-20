@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'rigging_pro.dart';
 
 double _n(TextEditingController c) =>
     double.tryParse(c.text.trim().replaceAll(',', '.')) ?? 0;
@@ -113,6 +114,7 @@ class AdvancedRiggingScreen extends StatelessWidget {
           '2 point lift: load per point & sling', const CgShareScreen()),
       tile(Icons.terrain, 'Ground Bearing', 'Outrigger mat pressure',
           const GroundBearingScreen()),
+      tile(Icons.handyman, 'Pro Tools', 'Crane chart, lift plan PDF, capacity, certificates', const ProToolsScreen()),
       _note(_disclaimer),
     ]);
   }

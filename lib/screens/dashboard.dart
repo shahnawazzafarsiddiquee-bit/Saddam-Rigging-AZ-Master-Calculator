@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../app/routes.dart';
+import 'material_calculators.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -14,6 +15,7 @@ class DashboardScreen extends StatelessWidget {
       _DashboardItem('Equipment Management', Icons.inventory_2, AppRoutes.equipment),
       _DashboardItem('QR Scanner', Icons.qr_code_scanner, AppRoutes.equipment, qrShortcut: true),
       _DashboardItem('HSE Safety', Icons.health_and_safety, AppRoutes.hse),
+      _DashboardItem('Material Calculators', Icons.construction, 'material:hub'),
       _DashboardItem('Reports', Icons.picture_as_pdf, AppRoutes.reports),
       _DashboardItem('Backup', Icons.backup, AppRoutes.settings),
       _DashboardItem('Settings', Icons.settings, AppRoutes.settings),
@@ -67,7 +69,13 @@ class _DashboardTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.pushNamed(context, item.route),
+        onTap: () {
+          if (item.route == 'material:hub') {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const MaterialCalculatorsScreen()));
+          } else {
+            Navigator.pushNamed(context, item.route);
+          }
+        },
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),

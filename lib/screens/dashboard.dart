@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../app/routes.dart';
 import 'material_calculators.dart';
+import 'rigging_advanced.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -16,6 +17,7 @@ class DashboardScreen extends StatelessWidget {
       _DashboardItem('QR Scanner', Icons.qr_code_scanner, AppRoutes.equipment, qrShortcut: true),
       _DashboardItem('HSE Safety', Icons.health_and_safety, AppRoutes.hse),
       _DashboardItem('Material Calculators', Icons.construction, 'material:hub'),
+      _DashboardItem('Advanced Rigging', Icons.engineering, 'advanced:hub'),
       _DashboardItem('Reports', Icons.picture_as_pdf, AppRoutes.reports),
       _DashboardItem('Backup', Icons.backup, AppRoutes.settings),
       _DashboardItem('Settings', Icons.settings, AppRoutes.settings),
@@ -70,7 +72,9 @@ class _DashboardTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
-          if (item.route == 'material:hub') {
+          if (item.route == 'advanced:hub') {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const AdvancedRiggingScreen()));
+          } else if (item.route == 'material:hub') {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const MaterialCalculatorsScreen()));
           } else {
             Navigator.pushNamed(context, item.route);

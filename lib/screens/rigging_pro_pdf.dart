@@ -209,6 +209,12 @@ class _LiftPlanPdfScreenState extends State<LiftPlanPdfScreen> {
             legs == 4 ? 'Only 2 legs assumed to carry load' : '2 leg sling'
           ],
         ]),
+        if (LiftDiagramCache.png != null) ...[
+          pw.SizedBox(height: 12),
+          pw.Text('Lift diagram', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 4),
+          pw.Image(pw.MemoryImage(LiftDiagramCache.png!), height: 230),
+        ],
         _pdfSection('5. Environment', [
           ['Wind speed', windTxt],
         ]),

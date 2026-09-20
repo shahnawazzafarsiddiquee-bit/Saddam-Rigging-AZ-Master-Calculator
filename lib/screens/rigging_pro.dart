@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart' as mlk;
 import 'rigging_pro_db.dart';
+import 'pro2_db.dart';
 
 part 'rigging_pro_chartedit.dart';
 part 'rigging_pro_chart.dart';

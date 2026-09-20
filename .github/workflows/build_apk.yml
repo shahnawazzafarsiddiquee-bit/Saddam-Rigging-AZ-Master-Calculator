@@ -24,8 +24,12 @@ jobs:
         run: flutter pub get
       - name: Flutter Analyze (non-blocking)
         run: flutter analyze || true
+      - name: Use fixed signing key
+        run: |
+          mkdir -p ~/.android
+          cp -f android/keystore/fixed_debug.p12 ~/.android/debug.keystore
       - name: Build APK
-        run: flutter build apk --release --no-shrink
+        run: flutter build apk --release --build-number=${{ github.run_number }} --no-shrink
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

@@ -151,37 +151,7 @@ class VoiceScreen extends StatefulWidget {
 
 class _VoiceScreenState extends State<VoiceScreen> {
   final cmd = TextEditingController();
-  final _voice = VoiceInput();
-  bool listening = false;
-  String locale = 'en_IN';
-  String err = '';
   List<_R> out = [];
-
-  Future<void> _mic() async {
-    if (listening) {
-      await _voice.stop();
-      if (mounted) setState(() => listening = false);
-      return;
-    }
-    setState(() {
-      err = '';
-      listening = true;
-    });
-    final e = await _voice.start((text, done) {
-      if (!mounted) return;
-      setState(() {
-        cmd.text = text;
-        if (done) listening = false;
-      });
-      if (done) _run();
-    }, locale: locale);
-    if (e != null && mounted) {
-      setState(() {
-        err = e;
-        listening = false;
-      });
-    }
-  }
 
   Future<void> _run() async {
     final r = await _runVoice(cmd.text);
@@ -191,50 +161,28 @@ class _VoiceScreenState extends State<VoiceScreen> {
 
   @override
   void dispose() {
-    _voice.stop();
     cmd.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return _page('Voice Commands', [
-      Wrap(
-        spacing: 8,
-        children: [
-          ChoiceChip(
-            label: const Text('English'),
-            selected: locale == 'en_IN',
-            onSelected: (_) => setState(() => locale = 'en_IN'),
-          ),
-          ChoiceChip(
-            label: const Text('Hindi'),
-            selected: locale == 'hi_IN',
-            onSelected: (_) => setState(() => locale = 'hi_IN'),
-          ),
-        ],
-      ),
-      const SizedBox(height: 12),
-      FilledButton.icon(
-        onPressed: _mic,
-        icon: Icon(listening ? Icons.stop : Icons.mic),
-        label: Text(listening ? 'Sun raha hoon... (rokne ke liye dabao)' : 'Bolo'),
-      ),
-      if (err.isNotEmpty) _results([_R(err, 3)]),
-      const SizedBox(height: 12),
+    return _page('Smart Command', [
       TextField(
         controller: cmd,
+        autofocus: true,
+        textInputAction: TextInputAction.done,
         decoration: const InputDecoration(
-          labelText: 'Command (bol ke ya likh ke)',
+          labelText: 'Command likho ya keyboard ke mic se bolo',
           border: OutlineInputBorder(),
         ),
         onSubmitted: (_) => _run(),
       ),
       const SizedBox(height: 8),
-      OutlinedButton(onPressed: _run, child: const Text('Chalao')),
+      FilledButton(onPressed: _run, child: const Text('Chalao')),
       _results(out),
       _note(
-          'Examples: "10 cm to inch", "sling 6 ton 60 degree", "crane 12 ton radius 18", "wind 25". Mic ke liye phone me Google speech service aur internet chahiye. Na chale to command likh ke Chalao dabao.'),
+          'Examples: "10 cm to inch", "sling 6 ton 60 degree", "crane 12 ton radius 18", "wind 25". Bolne ke liye keyboard ke mic ka button dabao.'),
       _note(_disclaimer),
     ]);
   }

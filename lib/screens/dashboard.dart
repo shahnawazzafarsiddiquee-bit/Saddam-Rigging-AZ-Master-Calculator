@@ -143,8 +143,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _search = TextEditingController();
-  final _voiceIn = VoiceInput();
-  bool _listening = false;
   String _q = '';
   int _expired = 0;
   int _soon = 0;
@@ -204,28 +202,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (_) {}
   }
 
-  Future<void> _voiceSearch() async {
-    if (_listening) {
-      await _voiceIn.stop();
-      if (mounted) setState(() => _listening = false);
-      return;
-    }
-    setState(() => _listening = true);
-    final e = await _voiceIn.start((text, done) {
-      if (!mounted) return;
-      setState(() {
-        _search.text = text;
-        _q = text.trim().toLowerCase();
-        if (done) _listening = false;
-      });
-    });
-    if (e != null && mounted) {
-      setState(() => _listening = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e)));
-    }
-  }
-
   void _open(_Tool t) {
     final p = t.page;
     final r = t.route;
@@ -239,7 +215,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
-    _voiceIn.stop();
     _search.dispose();
     super.dispose();
   }
@@ -349,16 +324,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         controller: _search,
         onChanged: (v) => setState(() => _q = v.trim().toLowerCase()),
         decoration: InputDecoration(
-          hintText: 'Tool dhundo ya bolo (sling, crane, wind...)',
+          hintText: 'Tool dhundo ya keyboard ke mic se bolo',
           prefixIcon: const Icon(Icons.search),
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                icon: Icon(_listening ? Icons.mic : Icons.mic_none,
-                    color: _listening ? Colors.redAccent : null),
-                onPressed: _voiceSearch,
-              ),
               if (_q.isNotEmpty)
                 IconButton(
                   icon: const Icon(Icons.close),

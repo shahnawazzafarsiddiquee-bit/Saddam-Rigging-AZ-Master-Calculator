@@ -7,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'pro2_db.dart';
 import 'rigging_pro_db.dart';
 
@@ -120,43 +119,4 @@ Future<Uint8List?> _capture(GlobalKey key, {double ratio = 2.0}) async {
   final ui.Image img = await ro.toImage(pixelRatio: ratio);
   final bd = await img.toByteData(format: ui.ImageByteFormat.png);
   return bd?.buffer.asUint8List();
-}
-
-class VoiceInput {
-  final stt.SpeechToText _s = stt.SpeechToText();
-  bool _ready = false;
-
-  Future<String?> start(void Function(String text, bool done) onResult,
-      {String locale = 'en_IN'}) async {
-    try {
-      if (!_ready) {
-        _ready = await _s.initialize();
-      }
-      if (!_ready) return 'Mic ki permission ya speech service nahi mili';
-      String? id;
-      final locs = await _s.locales();
-      final want = locale.replaceAll('-', '_').toLowerCase();
-      for (final l in locs) {
-        if (l.localeId.replaceAll('-', '_').toLowerCase() == want) {
-          id = l.localeId;
-          break;
-        }
-      }
-      await _s.listen(
-        onResult: (r) => onResult(r.recognizedWords, r.finalResult),
-        localeId: id,
-        listenFor: const Duration(seconds: 25),
-        pauseFor: const Duration(seconds: 4),
-      );
-      return null;
-    } catch (e) {
-      return 'Voice error: $e';
-    }
-  }
-
-  Future<void> stop() async {
-    try {
-      await _s.stop();
-    } catch (_) {}
-  }
 }

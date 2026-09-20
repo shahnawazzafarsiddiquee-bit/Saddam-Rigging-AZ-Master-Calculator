@@ -21,7 +21,7 @@ class _CraneModel {
   const _CraneModel(this.name, this.boomLength, this.chart);
 }
 
-const List<_CraneModel> _craneDatabase = [
+final List<_CraneModel> _craneDatabase = [
   _CraneModel('Mobile Crane 50t', 30, {3: 50, 6: 28, 9: 18, 12: 12, 15: 8, 20: 5}),
   _CraneModel('Mobile Crane 100t', 40, {4: 100, 8: 55, 12: 35, 16: 24, 20: 17, 25: 11}),
   _CraneModel('Crawler Crane 250t', 55, {6: 250, 10: 160, 15: 100, 20: 68, 25: 48, 30: 34}),

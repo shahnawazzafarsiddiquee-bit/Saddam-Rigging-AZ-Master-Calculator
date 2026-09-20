@@ -111,7 +111,7 @@ class _CertTrackerScreenState extends State<CertTrackerScreen> {
             : 'Expiry: ${_fmtDate(expiry!)}'),
       ),
       const SizedBox(height: 8),
-      FilledButton(onPressed: _add, child: const Text('Add')),
+      ElevatedButton(onPressed: _add, child: const Text('Add')),
       if (err.isNotEmpty) _results([_R(err, 3)]),
       const SizedBox(height: 12),
       ...rows.map((r) {

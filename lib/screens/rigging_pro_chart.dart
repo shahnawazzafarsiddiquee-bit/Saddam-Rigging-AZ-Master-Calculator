@@ -210,7 +210,7 @@ class _CraneChartScreenState extends State<CraneChartScreen> {
         _field(rad, 'Working radius', suffix: 'm'),
         _field(load, 'Total hook load (load + rigging + block)',
             suffix: 'ton'),
-        FilledButton(onPressed: _lookup, child: const Text('Capacity check')),
+        ElevatedButton(onPressed: _lookup, child: const Text('Capacity check')),
         _results(out),
         TextButton(
             onPressed: _delete,

@@ -237,7 +237,7 @@ class _SlingLengthScreenState extends State<SlingLengthScreen> {
             .toList(),
       ),
       const SizedBox(height: 16),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
           'Container: 12 m x 2.44 m, 4 leg. Pipe: 2 leg, length = dono sling points ke beech doori. Wire rope size rule: WLL = d x d / 100 ton (estimate).'),
@@ -347,7 +347,7 @@ class _CraneBoomScreenState extends State<CraneBoomScreen> {
       _field(off, 'Boom foot offset (slew centre se)', suffix: 'm'),
       _field(foot, 'Boom foot height (ground se)', suffix: 'm'),
       _field(chart, 'Load chart capacity (optional)', suffix: 'ton'),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
           'Ye geometry se minimum boom length hai. Chart me agli available boom length lo aur wahi ki capacity daalo. Jib, boom bend aur outrigger setting shamil nahi.'),
@@ -428,7 +428,7 @@ class _WindCheckScreenState extends State<WindCheckScreen> {
       _field(ar, 'Load ka hawa wala area (length x height)', suffix: 'm2'),
       _field(load, 'Load weight', suffix: 'ton'),
       _field(cdc, 'Drag factor (flat surface ~1.2)'),
-      FilledButton(onPressed: calc, child: const Text('Check')),
+      ElevatedButton(onPressed: calc, child: const Text('Check')),
       _results(out),
       _note(
           'Force = 0.5 x 1.225 x v x v x Cd x Area. Gust isse zyada ho sakta hai, isliye margin rakho.'),
@@ -504,7 +504,7 @@ class _CgShareScreenState extends State<CgShareScreen> {
       _field(sp, 'Dono lifting points ke beech doori', suffix: 'm'),
       _field(cg, 'CG, point A se kitni doori par', suffix: 'm'),
       _field(hh, 'Hook ki height lifting points se upar', suffix: 'm'),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
           'CG jis point ke paas ho, us par zyada load aur us sling ki tension zyada. Dono sling ki tension ke hisaab se size lo.'),
@@ -573,7 +573,7 @@ class _GroundBearingScreenState extends State<GroundBearingScreen> {
       _field(ml, 'Mat length', suffix: 'm'),
       _field(mw, 'Mat width', suffix: 'm'),
       _field(sb, 'Soil allowable bearing (soil report se)', suffix: 'ton/m2'),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
           'Outrigger par max load usually crane ke weight aur load dono se aata hai. Exact value crane manual me dekho.'),

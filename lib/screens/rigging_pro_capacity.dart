@@ -135,7 +135,7 @@ class _CapacityScreenState extends State<CapacityScreen> {
       ),
       const SizedBox(height: 16),
       _field(load, 'Shackle par load (optional)', suffix: 'ton'),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       const SizedBox(height: 16),
       const Text('Wire rope sling (6x36 IWRC) approx WLL, ton',

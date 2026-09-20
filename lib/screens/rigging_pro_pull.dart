@@ -89,7 +89,7 @@ class _PullingForceScreenState extends State<PullingForceScreen> {
       _field(slope, 'Slope (chadhai + / utrai -)', suffix: 'deg'),
       _field(margin, 'Safety margin'),
       _field(parts, 'Block ke parts of line (1 = seedha)'),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
           'Force = W x (friction x cos + sin). Friction values approx hain, site ki surface ke hisaab se badlo.'),

@@ -241,7 +241,7 @@ class _ChartEditScreenState extends State<ChartEditScreen> {
         ),
       ),
       const SizedBox(height: 12),
-      FilledButton(onPressed: _save, child: const Text('Save')),
+      ElevatedButton(onPressed: _save, child: const Text('Save')),
       if (msg.isNotEmpty) _results([_R(msg, 3)]),
       _note(
           'Ek page ka ek table (ek configuration) ek baar import karo. Auto-detect draft hai: har number original chart se milao, galat ho to yahin sudhaar do.'),

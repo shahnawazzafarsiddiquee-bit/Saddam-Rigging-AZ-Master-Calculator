@@ -212,7 +212,7 @@ class _CraneFinderScreenState extends State<CraneFinderScreen> {
       _live(rig, 'Rigging + hook block weight', 'ton'),
       _live(rad, 'Working radius (khali = max radius batao)', 'm'),
       _live(lim, 'Utilization limit', '%'),
-      FilledButton(onPressed: _find, child: const Text('Crane dhundo')),
+      ElevatedButton(onPressed: _find, child: const Text('Crane dhundo')),
       _results(out),
       _note(
           'Sirf aapke saved charts me se dhundta hai. Radius chart ke agle bade value par dekha jata hai (safe side). Pehle Crane Load Chart me chart import karo.'),

@@ -130,7 +130,7 @@ class _SteelPipeCalculatorState extends State<SteelPipeCalculator> {
       _field(th, 'Wall thickness', suffix: 'mm'),
       _field(len, 'Length of one pipe', suffix: 'm'),
       _field(qty, 'Quantity', suffix: 'nos'),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _result(result),
       const Padding(
         padding: EdgeInsets.only(top: 12),
@@ -183,7 +183,7 @@ class _SteelPlateCalculatorState extends State<SteelPlateCalculator> {
       _field(wid, 'Width', suffix: 'm'),
       _field(th, 'Thickness', suffix: 'mm'),
       _field(qty, 'Quantity', suffix: 'nos'),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _result(result),
       const Padding(
         padding: EdgeInsets.only(top: 12),
@@ -266,7 +266,7 @@ class _ConcreteCalculatorState extends State<ConcreteCalculator> {
             .toList(),
       ),
       const SizedBox(height: 16),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _result(result),
       const Padding(
         padding: EdgeInsets.only(top: 12),
@@ -317,7 +317,7 @@ class _RebarCalculatorState extends State<RebarCalculator> {
       _field(dia, 'Bar diameter', suffix: 'mm'),
       _field(len, 'Length of one bar', suffix: 'm'),
       _field(qty, 'Number of bars', suffix: 'nos'),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _result(result),
       const Padding(
         padding: EdgeInsets.only(top: 12),

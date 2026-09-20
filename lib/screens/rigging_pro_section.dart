@@ -115,7 +115,7 @@ class _SectionWeightScreenState extends State<SectionWeightScreen> {
       const SizedBox(height: 8),
       _field(len, 'Length of one piece', suffix: 'm'),
       _field(qty, 'Quantity', suffix: 'nos'),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
           'Round bar: d x d / 162. Flat/Square: 0.00785 x mm x mm kg/m. Supplier ke chart se ek do size zaroor mila lo.'),
@@ -244,7 +244,7 @@ class _ObjectWeightScreenState extends State<ObjectWeightScreen> {
       if (shape != 'Sphere') _field(d2, _l2),
       if (shape == 'Block' || shape == 'Tank (hollow)') _field(d3, _l3),
       _field(qty, 'Quantity', suffix: 'nos'),
-      FilledButton(onPressed: calc, child: const Text('Calculate')),
+      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
           'Tank me shell weight (dono end plate ke saath) aur paani se bhara weight dono milte hain.'),

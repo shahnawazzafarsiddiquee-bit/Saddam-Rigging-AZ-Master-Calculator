@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart' as fp;
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart' as mlk;
 import 'rigging_pro_db.dart';
 
 part 'rigging_pro_chartedit.dart';
@@ -13,6 +16,8 @@ part 'rigging_pro_capacity.dart';
 part 'rigging_pro_section.dart';
 part 'rigging_pro_cert.dart';
 part 'rigging_pro_pull.dart';
+part 'rigging_pro_ocr.dart';
+part 'rigging_pro_finder.dart';
 
 double _n(TextEditingController c) =>
     double.tryParse(c.text.trim().replaceAll(',', '.')) ?? 0;
@@ -191,6 +196,7 @@ class _ProToolsScreenState extends State<ProToolsScreen> {
     return _page('Pro Tools', [
       if (certMsg.isNotEmpty) _results([_R(certMsg, certLvl)]),
       const SizedBox(height: 8),
+      tile(Icons.auto_awesome, 'Crane Finder (auto)', 'Weight daalo: crane, boom, radius, sling auto', const CraneFinderScreen()),
       tile(Icons.table_chart, 'Crane Load Chart',
           'Chart save karo, capacity aur utilization', const CraneChartScreen()),
       tile(Icons.picture_as_pdf, 'Lift Plan PDF',

@@ -25,7 +25,7 @@ jobs:
       - name: Flutter Analyze (non-blocking)
         run: flutter analyze || true
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --no-shrink
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

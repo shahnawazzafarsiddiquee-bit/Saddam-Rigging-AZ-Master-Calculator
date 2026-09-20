@@ -34,6 +34,11 @@ class _ChartEditScreenState extends State<ChartEditScreen> {
   final cfg = TextEditingController();
   final data = TextEditingController();
   String msg = '';
+  String unit = 'ton';
+  bool radiusSide = true;
+  bool busy = false;
+  String status = '';
+  int statusLvl = 0;
 
   @override
   void initState() {
@@ -82,6 +87,90 @@ class _ChartEditScreenState extends State<ChartEditScreen> {
     Navigator.pop(context);
   }
 
+  Future<void> _import() async {
+    if (busy) return;
+    setState(() {
+      busy = true;
+      status = 'File chuno...';
+      statusLvl = 0;
+    });
+    try {
+      final res = await fp.FilePicker.platform.pickFiles(
+        type: fp.FileType.custom,
+        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      );
+      final path =
+          (res == null || res.files.isEmpty) ? null : res.files.single.path;
+      if (path == null) {
+        if (mounted) {
+          setState(() {
+            status = '';
+          });
+        }
+        return;
+      }
+      List<String> images = [path];
+      if (path.toLowerCase().endsWith('.pdf')) {
+        if (mounted) {
+          setState(() => status = 'PDF ke pages tayyar ho rahe hain...');
+        }
+        images = await _pdfToPngs(path, 8);
+      }
+      final found = <List<double>>[];
+      final notes = <String>[];
+      for (int i = 0; i < images.length; i++) {
+        if (mounted) {
+          setState(() => status = 'Page ${i + 1}/${images.length} padh rahe hain...');
+        }
+        final toks = await _ocrFile(images[i], unit);
+        found.addAll(_buildTable(toks, radiusSide, notes));
+      }
+      if (!mounted) return;
+      if (found.isEmpty) {
+        setState(() {
+          status =
+              'Table nahi mila. ${notes.isEmpty ? '' : notes.first}. Seedhi, saaf photo lo ya "layout" badlo';
+          statusLvl = 3;
+        });
+        return;
+      }
+      final caps = found.map((r) => r[2]).toList()..sort();
+      final med = caps[caps.length ~/ 2];
+      final k = unit == 'kg' ? 0.001 : (unit == 'lb' ? 0.000453592 : 1.0);
+      final seen = <String>{};
+      final rows = <List<double>>[];
+      for (final r in found) {
+        final key = '${r[0]}|${r[1]}';
+        if (seen.add(key)) rows.add([r[0], r[1], r[2] * k]);
+      }
+      final warns = <String>[];
+      if (unit == 'ton' && med > 400) {
+        warns.add(
+            'Capacity bahut badi hai: chart kg me ho sakta hai. Unit "kg" chuno aur dobara import karo');
+      }
+      warns.addAll(_checkChart(rows).take(4));
+      final text = rows
+          .map((r) => '${_num3(r[0])}, ${_num3(r[1])}, ${_num3(r[2])}')
+          .join('\n');
+      final head =
+          '${rows.length} values mile (${images.length} page). Neeche check karo, original chart se milao, phir Save.';
+      setState(() {
+        data.text = data.text.trim().isEmpty ? text : data.text.trim() + '\n' + text;
+        status = warns.isEmpty ? head : head + '\n' + warns.join('\n');
+        statusLvl = 2;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          status = 'Import fail: $e';
+          statusLvl = 3;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   @override
   void dispose() {
     name.dispose();
@@ -93,14 +182,59 @@ class _ChartEditScreenState extends State<ChartEditScreen> {
   @override
   Widget build(BuildContext context) {
     return _page('Crane Chart Daalo', [
-      _textField(name, 'Crane ka naam (jaise: Tadano 50T)'),
+      _textField(name, 'Crane ka naam (jaise: Tadano 50T full outrigger)'),
       _textField(cfg, 'Chart config (outrigger, counterweight, 360 deg)'),
+      const Divider(),
+      const Text('PDF / Photo se auto import',
+          style: TextStyle(fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      const Text('Chart me capacity ki unit:'),
+      Wrap(
+        spacing: 8,
+        children: ['ton', 'kg', 'lb']
+            .map((u) => ChoiceChip(
+                  label: Text(u),
+                  selected: unit == u,
+                  onSelected: (_) => setState(() => unit = u),
+                ))
+            .toList(),
+      ),
+      const SizedBox(height: 8),
+      const Text('Table ka layout:'),
+      Wrap(
+        spacing: 8,
+        children: [
+          ChoiceChip(
+            label: const Text('Radius side me, boom upar'),
+            selected: radiusSide,
+            onSelected: (_) => setState(() => radiusSide = true),
+          ),
+          ChoiceChip(
+            label: const Text('Boom side me, radius upar'),
+            selected: !radiusSide,
+            onSelected: (_) => setState(() => radiusSide = false),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      FilledButton.icon(
+        onPressed: busy ? null : _import,
+        icon: const Icon(Icons.upload_file),
+        label: const Text('PDF / Photo chuno'),
+      ),
+      if (busy)
+        const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: LinearProgressIndicator(),
+        ),
+      if (status.isNotEmpty) _results([_R(status, statusLvl)]),
+      const Divider(),
       TextField(
         controller: data,
         maxLines: 12,
         keyboardType: TextInputType.multiline,
         decoration: const InputDecoration(
-          labelText: 'Chart data: boom, radius, capacity (har line me ek)',
+          labelText: 'Chart data: boom, radius, capacity (ton)',
           hintText: '24, 6, 30\n24, 8, 22\n24, 10, 16\n30, 8, 18',
           alignLabelWithHint: true,
           border: OutlineInputBorder(),
@@ -110,7 +244,7 @@ class _ChartEditScreenState extends State<ChartEditScreen> {
       FilledButton(onPressed: _save, child: const Text('Save')),
       if (msg.isNotEmpty) _results([_R(msg, 3)]),
       _note(
-          'Boom length (m), radius (m), capacity (ton). Numbers apni crane ki original load chart se hi daalo. Ek boom length ki saari radius lines daalo.'),
+          'Ek page ka ek table (ek configuration) ek baar import karo. Auto-detect draft hai: har number original chart se milao, galat ho to yahin sudhaar do.'),
     ]);
   }
 }

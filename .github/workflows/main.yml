@@ -1,6 +1,8 @@
 name: Build Android APK
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -14,16 +16,15 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.24.0'
+          channel: 'stable'
 
       - name: Check Project Files
         run: |
-          echo "Current location:"
-          pwd
-          echo "Files:"
+          echo "Listing repo root:"
           ls -la
-          echo "Searching main.dart:"
-          find . -name main.dart
+          echo "Listing lib folder:"
+          ls -la lib || echo "lib folder not found!"
 
       - name: Install Dependencies
         run: flutter pub get
@@ -34,5 +35,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Saddam-Rigging-AZ-APK
+          name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk

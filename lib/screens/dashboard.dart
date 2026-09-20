@@ -28,7 +28,7 @@ class DashboardScreen extends StatelessWidget {
         title: const Column(
           children: [
             Text('SADDAM RIGGING A-Z', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text('Master Lifting Calculator', style: TextStyle(fontSize: 12, color: Colors.white70)),
+            Text('Master Lifting Calculator  |  v2 Pro Tools', style: TextStyle(fontSize: 12, color: Colors.white70)),
           ],
         ),
       ),

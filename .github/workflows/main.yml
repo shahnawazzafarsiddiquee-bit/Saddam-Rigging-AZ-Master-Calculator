@@ -16,7 +16,16 @@ jobs:
         with:
           channel: stable
 
-      - name: Install dependencies
+      - name: Check Project Files
+        run: |
+          echo "Current location:"
+          pwd
+          echo "Files:"
+          ls -la
+          echo "Searching main.dart:"
+          find . -name main.dart
+
+      - name: Install Dependencies
         run: flutter pub get
 
       - name: Build APK

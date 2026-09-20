@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'unit_converter.dart';
 
 double _v(TextEditingController c) =>
     double.tryParse(c.text.trim().replaceAll(',', '.')) ?? 0;
@@ -75,6 +76,7 @@ class MaterialCalculatorsScreen extends StatelessWidget {
           const SteelPlateCalculator()),
       tile(Icons.foundation, 'Concrete', 'Volume, cement, sand, aggregate',
           const ConcreteCalculator()),
+      tile(Icons.swap_horiz, 'Unit Converter', 'mm, cm, m, inch, ft, kg, ton', const UnitConverterScreen()),
       tile(Icons.horizontal_rule, 'Rebar (Saria)', 'Weight by diameter',
           const RebarCalculator()),
     ]);

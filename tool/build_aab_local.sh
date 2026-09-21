@@ -2,10 +2,11 @@
 # Build a Play Store ready, signed app-release.aab on any Linux machine
 # (a GitHub Codespace works well) without needing CI secrets.
 #
-# It installs Flutter and the Android SDK into your home directory, creates an
-# upload keystore if you don't already have one, and signs the bundle with it.
+# It installs Flutter, the Android SDK and a JDK 17 into your home directory,
+# creates an upload keystore if you don't already have one, and signs the
+# bundle with it.
 #
-#   curl -fsSL -o build_aab.sh https://raw.githubusercontent.com/shahnawazzafarsiddiquee-bit/Saddam-Rigging-AZ-Master-Calculator/claude/github-file-creation-fnow0w/tool/build_aab_local.sh
+#   curl -fsSL -o build_aab.sh https://raw.githubusercontent.com/shahnawazzafarsiddiquee-bit/Saddam-Rigging-AZ-Master-Calculator/refs/heads/claude/github-file-creation-fnow0w/tool/build_aab_local.sh
 #   bash build_aab.sh
 #
 # Keep upload-keystore.jks and KEYSTORE-PASSWORD.txt somewhere safe afterwards:
@@ -21,12 +22,12 @@ REPO_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$REPO_DIR"
 echo "Working in: $REPO_DIR"
 
-if [ -n "$(git status --porcelain --untracked-files=no 2>/dev/null)" ]; then
-  echo "ERROR: you have uncommitted changes to tracked files. Commit or stash them first."
-  exit 1
-fi
-
 if ! grep -q 'key.properties' android/app/build.gradle 2>/dev/null; then
+  if [ -n "$(git status --porcelain --untracked-files=no 2>/dev/null)" ]; then
+    echo "ERROR: uncommitted changes to tracked files; commit or stash them so the"
+    echo "       branch with the release-signing config can be checked out."
+    exit 1
+  fi
   echo ""
   echo "==> Switching to $SIGNING_BRANCH (it carries the release-signing config)"
   git fetch origin "$SIGNING_BRANCH"
@@ -53,6 +54,43 @@ else
   printf 'KEYSTORE_PASSWORD=%s\nKEY_PASSWORD=%s\nKEY_ALIAS=upload\n' "$KS_PASS" "$KS_PASS" > KEYSTORE-PASSWORD.txt
 fi
 
+# Gradle 8.14 (android/gradle/wrapper/gradle-wrapper.properties) cannot run on
+# newer JDKs - a Java 25 default produces "Unsupported class file major version
+# 69". CI pins JDK 17, so do the same here.
+echo ""
+echo "==> Locating a JDK 17"
+find_jdk17() {
+  local d
+  for d in "$HOME"/jdk17 /usr/lib/jvm/*17* /usr/local/sdkman/candidates/java/*17* /opt/java/*17*; do
+    if [ -x "$d/bin/javac" ]; then echo "$d"; return 0; fi
+  done
+  return 1
+}
+
+JDK17="$(find_jdk17 || true)"
+
+if [ -z "$JDK17" ] && command -v apt-get >/dev/null 2>&1; then
+  echo "    not installed - trying apt"
+  sudo apt-get update -qq >/dev/null 2>&1 || true
+  sudo apt-get install -y -qq openjdk-17-jdk-headless >/dev/null 2>&1 || true
+  JDK17="$(find_jdk17 || true)"
+fi
+
+if [ -z "$JDK17" ]; then
+  echo "    not installed - downloading Temurin 17"
+  mkdir -p "$HOME/jdk17"
+  curl -fsSL -o /tmp/jdk17.tar.gz \
+    "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse"
+  tar xzf /tmp/jdk17.tar.gz -C "$HOME/jdk17" --strip-components=1
+  rm -f /tmp/jdk17.tar.gz
+  JDK17="$HOME/jdk17"
+fi
+
+echo "    using $JDK17"
+export JAVA_HOME="$JDK17"
+export PATH="$JAVA_HOME/bin:$PATH"
+java -version 2>&1 | head -1
+
 echo ""
 echo "==> Installing Flutter $FLUTTER_VERSION (a few minutes the first time)"
 export FLUTTER_HOME="$HOME/flutter"
@@ -64,6 +102,7 @@ if [ ! -x "$FLUTTER_HOME/bin/flutter" ]; then
 fi
 export PATH="$FLUTTER_HOME/bin:$PATH"
 git config --global --add safe.directory "$FLUTTER_HOME" 2>/dev/null || true
+flutter config --jdk-dir="$JDK17" >/dev/null
 flutter --version
 
 echo ""
@@ -89,6 +128,9 @@ source ./KEYSTORE-PASSWORD.txt
 printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=%s\n' \
   "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" "$REPO_DIR/upload-keystore.jks" \
   > android/key.properties
+
+# A daemon started under the old JDK would keep failing.
+(cd android && ./gradlew --stop >/dev/null 2>&1) || true
 
 echo ""
 echo "==> flutter pub get"

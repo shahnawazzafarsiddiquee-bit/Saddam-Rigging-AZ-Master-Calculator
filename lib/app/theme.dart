@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 
 /// Professional industrial engineering theme.
 /// Primary: Dark Navy Blue | Accent: Safety Orange | Background: Industrial Dark Grey
+///
+/// Contrast note: the navy here is kept a bit brighter than a near-black
+/// navy so it still reads as "blue" (not just dark) even in strong sunlight
+/// on a phone screen, and every AppBar gets a bright safety-orange strip
+/// underneath it so the header is always visible at a glance on site.
 class AppColors {
-  static const Color navy = Color(0xFF0D1B2A);
-  static const Color navyLight = Color(0xFF1B3A5C);
+  static const Color navy = Color(0xFF15335C);
+  static const Color navyLight = Color(0xFF2A4E85);
   static const Color safetyOrange = Color(0xFFFF6F00);
   static const Color industrialGrey = Color(0xFF1E1E1E);
   static const Color cardGrey = Color(0xFF2A2E33);
@@ -27,15 +32,27 @@ class AppTheme {
         surface: AppColors.cardGrey,
         error: AppColors.danger,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.navy,
-        foregroundColor: AppColors.textLight,
-        elevation: 2,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white, size: 26),
+        elevation: 3,
+        // Material 3 tries to tint the AppBar towards the surface color as
+        // the page scrolls, which is exactly what was washing the navy out
+        // — this keeps it a solid, high-contrast navy at all times.
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 3,
         centerTitle: true,
-        titleTextStyle: TextStyle(
-          color: AppColors.textLight,
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
           fontSize: 20,
           fontWeight: FontWeight.bold,
+          letterSpacing: 0.3,
+        ),
+        // A bright orange strip under every header — always visible even
+        // when the navy above it is washed out by direct sunlight.
+        shape: const Border(
+          bottom: BorderSide(color: AppColors.safetyOrange, width: 3),
         ),
       ),
       cardTheme: CardThemeData(

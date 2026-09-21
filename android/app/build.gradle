@@ -22,6 +22,16 @@ if (flutterVersionName == null) {
     flutterVersionName = "1.0.0"
 }
 
+// Release signing. CI writes android/key.properties from repository secrets;
+// when it is absent (plain local builds) the debug key is used instead.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withReader("UTF-8") { reader ->
+        keystoreProperties.load(reader)
+    }
+}
+
 android {
     namespace "com.saddam.rigging.azmaster"
     compileSdk 35
@@ -49,12 +59,22 @@ android {
         multiDexEnabled true
     }
 
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties["storeFile"])
+                storePassword keystoreProperties["storePassword"]
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Signed with the debug key for now so `flutter build apk --release`
-            // and the GitHub Actions workflow produce an installable APK out of the box.
-            // Replace with your own signing config before publishing to Play Store.
-            signingConfig signingConfigs.debug
+            // Play Store rejects debug-signed bundles, so the real key is used
+            // whenever key.properties is present.
+            signingConfig(keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug)
             minifyEnabled false
             shrinkResources false
         }

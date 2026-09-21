@@ -35,4 +35,4 @@ jobs:
             assets+=(saddam-rigging.aab)
           fi
           gh release delete latest --repo ${{ github.repository }} --cleanup-tag --yes || true
-          gh release create latest "${assets[@]}" --repo ${{ github.repository }} --target ${{ github.event.workflow_run.head_sha }} --title "Latest APK (build ${{ github.event.workflow_run.run_number }})" --notes "Commit ${{ github.event.workflow_run.head_sha }}" --latest
+          gh release create latest "${assets[@]}" --repo ${{ github.repository }} --target ${{ github.event.workflow_run.head_sha }} --title "Latest build ${{ github.event.workflow_run.run_number }} (APK + AAB)" --notes "Commit ${{ github.event.workflow_run.head_sha }}" --latest

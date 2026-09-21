@@ -28,6 +28,26 @@ jobs:
         run: |
           mkdir -p ~/.android
           cp -f android/keystore/fixed_debug.p12 ~/.android/debug.keystore
+      - name: Set up release signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "KEYSTORE_BASE64 secret not set - building with the debug key."
+            echo "Google Play will reject a debug-signed AAB; add the signing secrets before uploading."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release-keystore.jks
+          {
+            echo "storeFile=release-keystore.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > android/key.properties
+          echo "Release signing configured."
       - name: Build APK
         run: flutter build apk --release --build-number=${{ github.run_number }} --no-shrink
       - name: Upload APK

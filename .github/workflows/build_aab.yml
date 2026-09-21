@@ -4,19 +4,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  missing-secrets:
-    runs-on: ubuntu-latest
-    if: ${{ secrets.UPLOAD_KEYSTORE_BASE64 == '' }}
-    steps:
-      - name: Explain missing secrets
-        run: |
-          echo "::error::Add the UPLOAD_KEYSTORE_BASE64, UPLOAD_KEYSTORE_PASSWORD, UPLOAD_KEY_PASSWORD and UPLOAD_KEY_ALIAS repository secrets (Settings > Secrets and variables > Actions) before running this workflow."
-          exit 1
-
   build:
     runs-on: ubuntu-latest
-    if: ${{ secrets.UPLOAD_KEYSTORE_BASE64 != '' }}
+    env:
+      UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+      UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+      UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+      UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
     steps:
+      - name: Check signing secrets are configured
+        run: |
+          if [ -z "$UPLOAD_KEYSTORE_BASE64" ]; then
+            echo "::error::Add the UPLOAD_KEYSTORE_BASE64, UPLOAD_KEYSTORE_PASSWORD, UPLOAD_KEY_PASSWORD and UPLOAD_KEY_ALIAS repository secrets (Settings > Secrets and variables > Actions) before running this workflow."
+            exit 1
+          fi
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set up JDK 17
@@ -31,14 +32,13 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
       - name: Decode upload keystore
-        run: |
-          echo "${{ secrets.UPLOAD_KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
+        run: echo "$UPLOAD_KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
       - name: Write key.properties
         run: |
           cat > android/key.properties <<EOF
-          storePassword=${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.UPLOAD_KEY_PASSWORD }}
-          keyAlias=${{ secrets.UPLOAD_KEY_ALIAS }}
+          storePassword=$UPLOAD_KEYSTORE_PASSWORD
+          keyPassword=$UPLOAD_KEY_PASSWORD
+          keyAlias=$UPLOAD_KEY_ALIAS
           storeFile=upload-keystore.jks
           EOF
       - name: Build AAB

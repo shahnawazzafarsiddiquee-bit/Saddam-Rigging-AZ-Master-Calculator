@@ -161,6 +161,22 @@ To publish an `.aab` (Android App Bundle, what the Play Console requires):
    `app-release.aab`, signed with your upload key, as a downloadable
    artifact — upload that file to the Play Console.
 
+### Building the AAB without CI secrets
+
+If you'd rather not configure repository secrets, `tool/build_aab_local.sh`
+builds the signed bundle on any Linux machine — a GitHub Codespace works
+well. It installs Flutter and the Android SDK into your home directory,
+creates an upload keystore if you don't have one, and writes
+`app-release.aab` next to the repository:
+
+```bash
+curl -fsSL -o build_aab.sh https://raw.githubusercontent.com/shahnawazzafarsiddiquee-bit/Saddam-Rigging-AZ-Master-Calculator/claude/github-file-creation-fnow0w/tool/build_aab_local.sh
+bash build_aab.sh
+```
+
+Keep the generated `upload-keystore.jks` and `KEYSTORE-PASSWORD.txt` — Play
+Store updates must be signed with the same key. Both are git-ignored.
+
 See the official Flutter docs (*Build and release an Android app*) for more
 on Play App Signing.
 

@@ -1,0 +1,8 @@
+# Copy this file to "key.properties" (same folder) to sign release builds
+# with your own upload key instead of the shared debug key. Required before
+# publishing to the Play Store. NEVER commit the real key.properties or your
+# .jks keystore file to git — both are already covered by .gitignore.
+storePassword=REPLACE_WITH_KEYSTORE_PASSWORD
+keyPassword=REPLACE_WITH_KEY_PASSWORD
+keyAlias=upload
+storeFile=/absolute/path/to/upload-keystore.jks

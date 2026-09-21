@@ -1,0 +1,23 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.iml
+
+# Android
+android/local.properties
+android/key.properties
+android/**/*.jks
+android/**/*.keystore
+!android/keystore/fixed_debug.p12
+android/.gradle/
+android/app/.cxx/
+
+# IDE
+.idea/
+*.iws
+
+# macOS
+.DS_Store

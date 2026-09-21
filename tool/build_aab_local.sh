@@ -120,6 +120,27 @@ export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
 yes | sdkmanager --licenses >/dev/null 2>&1 || true
 sdkmanager "platform-tools" "platforms;android-36" "platforms;android-35" "build-tools;36.0.0" >/dev/null
 
+# The project's gradle.properties asks for -Xmx4G plus a 2G metaspace, which
+# on top of the Kotlin daemon and the editor server gets the Gradle daemon
+# OOM-killed on a small machine ("Gradle build daemon disappeared
+# unexpectedly"). Machine-specific limits belong in GRADLE_USER_HOME, which
+# takes precedence over the project file and leaves CI untouched.
+echo ""
+TOTAL_MB="$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo 8192)"
+HEAP_MB=$(( TOTAL_MB * 40 / 100 ))
+[ "$HEAP_MB" -lt 2048 ] && HEAP_MB=2048
+[ "$HEAP_MB" -gt 4096 ] && HEAP_MB=4096
+echo "==> Machine has ${TOTAL_MB} MB RAM and $(nproc) CPUs - capping Gradle at ${HEAP_MB} MB"
+mkdir -p "$HOME/.gradle"
+cat > "$HOME/.gradle/gradle.properties" <<PROPS
+org.gradle.jvmargs=-Xmx${HEAP_MB}m -XX:MaxMetaspaceSize=512m
+org.gradle.parallel=false
+org.gradle.workers.max=1
+org.gradle.caching=false
+kotlin.compiler.execution.strategy=in-process
+kotlin.incremental=false
+PROPS
+
 echo ""
 echo "==> Writing local.properties and key.properties"
 printf 'sdk.dir=%s\nflutter.sdk=%s\n' "$ANDROID_HOME" "$FLUTTER_HOME" > android/local.properties

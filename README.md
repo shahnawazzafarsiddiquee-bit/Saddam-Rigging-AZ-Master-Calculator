@@ -137,11 +137,48 @@ android/          full Gradle project (application ID: com.saddam.rigging.azmast
 
 ## Signing for Play Store Release
 
-The current `android/app/build.gradle` signs release builds with the Android
-**debug key** so the workflow above produces an installable APK immediately.
-Before publishing to the Play Store, generate your own upload keystore and
-replace the `signingConfigs.debug` reference with your own signing config
-(see the official Flutter docs: *Build and release an Android app*).
+By default, release builds are signed with the shared **debug key** so the
+APK workflow above produces an installable APK immediately — this is **not**
+acceptable for a Play Store submission.
+
+To publish an `.aab` (Android App Bundle, what the Play Console requires):
+
+1. Generate your own upload keystore (or use the one your team already
+   manages) and copy `android/key.properties.example` to
+   `android/key.properties`, filling in `storePassword`, `keyPassword`,
+   `keyAlias` and the absolute `storeFile` path. `android/app/build.gradle`
+   automatically switches release builds to this key once the file exists.
+   Never commit `key.properties` or the `.jks`/`.keystore` file — both are
+   git-ignored.
+2. For CI, add these repository secrets (**Settings → Secrets and variables
+   → Actions**):
+   - `UPLOAD_KEYSTORE_BASE64` — `base64 -w0 upload-keystore.jks` output
+   - `UPLOAD_KEYSTORE_PASSWORD`
+   - `UPLOAD_KEY_PASSWORD`
+   - `UPLOAD_KEY_ALIAS`
+3. Run the **Build Play Store AAB** workflow (Actions tab →
+   `.github/workflows/build_aab.yml` → *Run workflow*). It produces
+   `app-release.aab`, signed with your upload key, as a downloadable
+   artifact — upload that file to the Play Console.
+
+### Building the AAB without CI secrets
+
+If you'd rather not configure repository secrets, `tool/build_aab_local.sh`
+builds the signed bundle on any Linux machine — a GitHub Codespace works
+well. It installs Flutter and the Android SDK into your home directory,
+creates an upload keystore if you don't have one, and writes
+`app-release.aab` next to the repository:
+
+```bash
+curl -fsSL -o build_aab.sh https://raw.githubusercontent.com/shahnawazzafarsiddiquee-bit/Saddam-Rigging-AZ-Master-Calculator/claude/github-file-creation-fnow0w/tool/build_aab_local.sh
+bash build_aab.sh
+```
+
+Keep the generated `upload-keystore.jks` and `KEYSTORE-PASSWORD.txt` — Play
+Store updates must be signed with the same key. Both are git-ignored.
+
+See the official Flutter docs (*Build and release an Android app*) for more
+on Play App Signing.
 
 ---
 

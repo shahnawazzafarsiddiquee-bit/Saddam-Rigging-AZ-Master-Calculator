@@ -1,0 +1,11 @@
+# Android signing secrets - never commit these
+android/key.properties
+*.jks
+*.keystore
+
+# Build outputs
+build/
+android/.gradle/
+android/local.properties
+.dart_tool/
+.packages

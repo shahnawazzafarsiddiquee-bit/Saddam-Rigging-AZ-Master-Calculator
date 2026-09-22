@@ -40,7 +40,21 @@ jobs:
             echo "Google Play will reject a debug-signed AAB; add the signing secrets before uploading."
             exit 0
           fi
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release-keystore.jks
+          # Pasting a few KB of base64 by hand tends to wrap it, so drop any
+          # whitespace before decoding.
+          cleaned=$(printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]')
+          # Shape only - never the value - so a truncated paste is obvious in a
+          # log that masks the secret itself.
+          echo "Keystore secret length: ${#cleaned}"
+          if ! printf '%s' "$cleaned" | base64 -d > android/app/release-keystore.jks 2>/dev/null; then
+            echo "::error::KEYSTORE_BASE64 is not valid base64 - re-copy the whole line into the secret."
+            exit 1
+          fi
+          if ! keytool -list -keystore android/app/release-keystore.jks \
+              -alias "$KEY_ALIAS" -storepass "$KEYSTORE_PASSWORD" > /dev/null 2>&1; then
+            echo "::error::Keystore did not open with KEY_ALIAS and KEYSTORE_PASSWORD - check those secrets."
+            exit 1
+          fi
           {
             echo "storeFile=release-keystore.jks"
             echo "storePassword=$KEYSTORE_PASSWORD"

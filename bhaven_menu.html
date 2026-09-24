@@ -79,11 +79,7 @@
     font-family: 'Cairo', sans-serif; font-size: 16px; font-weight: 700; color: var(--ink);
     margin: 0 0 8px; direction: rtl; text-align: center;
   }
-  .editor-header small { font-size: 11.5px; color: var(--muted); margin: 0 0 10px; line-height: 1.5; display: block; direction: ltr; text-align: left; }
-  .price-transcription-buttons { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
-  .price-transcription-buttons button { font-size: 12px; padding: 7px 14px; border: 1.5px solid var(--teal); color: var(--teal); background: transparent; border-radius: 6px; cursor: pointer; transition: all .15s ease; font-weight: 600; }
-  .price-transcription-buttons button:hover { background: var(--teal); color: #fff; }
-  .price-transcription-buttons button:active { transform: scale(0.95); }
+  .editor-header small { font-size: 11.5px; color: var(--muted); margin: 0; line-height: 1.5; display: block; direction: ltr; text-align: left; }
 
   .toolbar {
     display: flex; gap: 7px; margin-bottom: 1.4rem; flex-wrap: wrap;
@@ -386,8 +382,6 @@
     .editor-header { padding-bottom: 0.75rem; margin-bottom: 1rem; }
     .editor-header h1 { font-size: 16px; }
     .editor-header p { font-size: 11.5px; }
-    .price-transcription-buttons { gap: 6px; }
-    .price-transcription-buttons button { font-size: 11px; padding: 6px 12px; }
     .main-title-field { padding: 11px 14px; border-radius: 10px; }
     .main-title-input { font-size: 20px; }
     .page-group-label { margin: 12px 0 8px; }
@@ -513,10 +507,6 @@
       <h1>B·Heaven</h1>
       <p>FOOD MENU</p>
       <small>Edit prices or text below, then switch to the Preview tab to see the finished menu. Click "Print / Save PDF" to get it as a PDF.</small>
-      <div class="price-transcription-buttons">
-        <button class="btn-transcribe-prices" id="transcribePricesBtn" type="button" title="Transcribe only prices">🎤 Transcribe Prices</button>
-        <button class="btn-transcribe-all" id="transcribeAllBtn" type="button" title="Transcribe all prices at once">🎤 Transcribe All</button>
-      </div>
     </div>
 
     <div class="main-title-field no-print">
@@ -1309,7 +1299,6 @@ function fmtPrice(str) {
 currentData = loadData();
 renderEditor();
 renderPreview();
-initializeTranscription();
 
 const mainTitleInput = document.getElementById('mainTitleInput');
 mainTitleInput.value = currentData.pages[0].title || 'القائمة';
@@ -1344,81 +1333,6 @@ function showCustomConfirm(message, onConfirm) {
   const onCancel = () => { cleanup(); };
   okBtn.addEventListener('click', onOk);
   cancelBtn.addEventListener('click', onCancel);
-}
-
-/* ---------- price transcription ---------- */
-function initializeTranscription() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert('Speech Recognition not supported in your browser');
-    return;
-  }
-
-  let isTranscribing = false;
-  let currentPriceIndex = 0;
-  let transcriberMode = 'prices'; // 'prices' or 'all'
-
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'ar-AE'; // Arabic UAE
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-
-  function getActivePriceInputs() {
-    return Array.from(document.querySelectorAll('input.f-price'));
-  }
-
-  function startTranscription(mode) {
-    const inputs = getActivePriceInputs();
-    if (inputs.length === 0) {
-      alert('No prices to transcribe');
-      return;
-    }
-    transcriberMode = mode;
-    currentPriceIndex = 0;
-    isTranscribing = true;
-
-    const btn = document.getElementById(mode === 'prices' ? 'transcribePricesBtn' : 'transcribeAllBtn');
-    btn.textContent = '🎤 Listening...';
-    btn.disabled = true;
-
-    transcribeNextPrice(inputs);
-  }
-
-  function transcribeNextPrice(inputs) {
-    if (currentPriceIndex >= inputs.length) {
-      isTranscribing = false;
-      const btn = document.getElementById(transcriberMode === 'prices' ? 'transcribePricesBtn' : 'transcribeAllBtn');
-      btn.textContent = transcriberMode === 'prices' ? '🎤 Transcribe Prices' : '🎤 Transcribe All';
-      btn.disabled = false;
-      alert('Price transcription complete!');
-      return;
-    }
-
-    const currentInput = inputs[currentPriceIndex];
-    currentInput.focus();
-    currentInput.select();
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      const cleanPrice = transcript.replace(/[^\d.,]/g, '').trim();
-      if (cleanPrice) {
-        currentInput.value = cleanPrice;
-        currentInput.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-      currentPriceIndex++;
-      setTimeout(() => transcribeNextPrice(inputs), 800);
-    };
-
-    recognition.onerror = () => {
-      currentPriceIndex++;
-      setTimeout(() => transcribeNextPrice(inputs), 800);
-    };
-
-    recognition.start();
-  }
-
-  document.getElementById('transcribePricesBtn')?.addEventListener('click', () => startTranscription('prices'));
-  document.getElementById('transcribeAllBtn')?.addEventListener('click', () => startTranscription('all'));
 }
 
 document.getElementById('resetBtn').addEventListener('click', () => {

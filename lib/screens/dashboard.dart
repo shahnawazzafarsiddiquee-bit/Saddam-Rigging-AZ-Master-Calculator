@@ -10,6 +10,7 @@ import 'rigging_pro2.dart';
 import 'pro2_db.dart';
 import 'advanced_calculators.dart';
 import 'lift_total_summary.dart';
+import 'synthetic_sling.dart';
 
 class _Tool {
   final String title;
@@ -63,6 +64,9 @@ List<_Section> _sections() => [
         _Tool('Advanced Calculators', Icons.science,
             page: () => const AdvancedCalculatorsHub(),
             keys: 'tandem spreader dynamic shock hardware selector multi point bolt torque'),
+        _Tool('Synthetic Sling Calculator', Icons.texture,
+            page: () => const SyntheticSlingScreen(),
+            keys: 'synthetic web round sling polyester nylon polypropylene belt patta colour'),
         _Tool('Lift Total Summary', Icons.summarize,
             page: () => const LiftTotalSummaryScreen(),
             keys: 'total summary sheet pdf export sign off checklist all in one'),
@@ -124,6 +128,7 @@ const List<String> _quickTitles = [
   'Sling Length & Angle',
   'Lift Total Summary',
   'Advanced Calculators',
+  'Synthetic Sling Calculator',
   'Lift Diagram',
   'Voice Commands',
   'Inspection Checklist',

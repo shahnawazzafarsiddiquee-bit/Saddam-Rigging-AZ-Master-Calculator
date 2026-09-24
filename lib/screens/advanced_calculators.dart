@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import 'hardware_selector.dart';
+import 'synthetic_sling.dart';
 
 double _n(TextEditingController c) =>
     double.tryParse(c.text.trim().replaceAll(',', '.')) ?? 0;
@@ -119,6 +120,9 @@ class AdvancedCalculatorsHub extends StatelessWidget {
       tile(Icons.build_circle, 'Hardware Quick Selector',
           'Web / round / wire / chain: vertical, choker, basket, 1-4 leg',
           const HardwareSelectorScreen()),
+      tile(Icons.texture, 'Synthetic Sling Calculator',
+          'Web / round sling: EN 1492 capacity, material, temperature, inspection',
+          const SyntheticSlingScreen()),
       tile(Icons.balance, 'Multi-Point Lift Planner',
           '3 ya 4 point lift: har point ki load, sling tension',
           const MultiPointLiftScreen()),

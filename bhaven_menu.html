@@ -287,8 +287,10 @@
     position: absolute; left: 0; top: 0;
     font-weight: 400; font-size: 16px; color: #111;
     white-space: nowrap; padding-top: 3px; direction: ltr;
+    display: flex; align-items: center; gap: 3px;
   }
-  .item-text { padding-left: 58px; }
+  .dirham-icon { display: inline-flex; align-items: center; flex-shrink: 0; }
+  .item-text { padding-left: 66px; }
   .item-name { font-weight: 700; font-size: 16px; color: #111; text-align: right; margin: 0; }
   .item-name .extra { font-weight: 400; font-size: 12px; color: var(--muted); }
   .item-desc {
@@ -1119,7 +1121,7 @@ function renderPreview() {
         const extraHtml = item.extra ? ` <span class="extra">${escapeHtml(item.extra)}</span>` : '';
         itemsHtml += `
           <div class="item">
-            <div class="item-price">${fmtPrice(item.price)}</div>
+            <div class="item-price"><span class="dirham-icon"><svg viewBox="0 0 110 120" width="13" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M22 8 L22 112 L58 112 C88 112 100 90 100 60 C100 30 88 8 58 8 Z M2 44 L62 44 L62 56 L2 56 Z M2 64 L62 64 L62 76 L2 76 Z"/></svg></span>${fmtPrice(item.price)}</div>
             <div class="item-text">
               <p class="item-name">${escapeHtml(item.name)}${extraHtml}</p>
               <p class="item-desc">${escapeHtml(item.desc)}</p>

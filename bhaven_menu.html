@@ -1164,29 +1164,30 @@ async function buildPdfBytes(onProgress) {
   const sheets = Array.from(document.querySelectorAll('#previewRoot .sheet'));
   if (!sheets.length) throw new Error('nothing to export');
 
-  // html2canvas cannot measure a hidden element, so make sure the preview page
-  // is laid out while we render, then put the user back where they were.
+  // Always render at desktop width so the PDF looks identical regardless of
+  // whether the user is on mobile and which tab is currently active.
   const previewView = document.getElementById('previewView');
   const wasHidden = !previewView.classList.contains('active');
-  if (wasHidden) {
-    previewView.style.position = 'absolute';
-    previewView.style.left = '-10000px';
-    previewView.style.top = '0';
-    previewView.style.width = '900px';
-    previewView.classList.add('active');
-    await new Promise(r => setTimeout(r, 60));
-  }
+  const savedPos = previewView.style.position;
+  const savedLeft = previewView.style.left;
+  const savedTop = previewView.style.top;
+  const savedWidth = previewView.style.width;
+
+  previewView.style.position = 'absolute';
+  previewView.style.left = '-10000px';
+  previewView.style.top = '0';
+  previewView.style.width = '900px';
+  if (wasHidden) previewView.classList.add('active');
+  await new Promise(r => setTimeout(r, 80));
 
   try {
     return await renderSheetsToPdf(sheets, onProgress);
   } finally {
-    if (wasHidden) {
-      previewView.classList.remove('active');
-      previewView.style.position = '';
-      previewView.style.left = '';
-      previewView.style.top = '';
-      previewView.style.width = '';
-    }
+    if (wasHidden) previewView.classList.remove('active');
+    previewView.style.position = savedPos;
+    previewView.style.left = savedLeft;
+    previewView.style.top = savedTop;
+    previewView.style.width = savedWidth;
   }
 }
 

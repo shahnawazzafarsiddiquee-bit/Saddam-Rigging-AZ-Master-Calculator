@@ -295,7 +295,13 @@
     text-align: right; font-weight: 400; font-size: 13px; color: var(--muted);
     line-height: 1.5; margin: 2px 0 0; white-space: pre-wrap;
   }
-  .section { margin-bottom: 4%; }
+  .section { margin-bottom: 2%; }
+  .section-divider {
+    width: 40%; height: 1px;
+    background: var(--line);
+    margin: 0 auto 2%;
+    border-radius: 1px;
+  }
   .pagebreak { height: 1px; margin: 2.6rem 0; }
   .footnote {
     margin-top: 2rem; padding-top: 0.9rem; border-top: 1px solid var(--line);
@@ -1123,6 +1129,11 @@ function renderPreview() {
       });
       secEl.innerHTML = `<div class="section-title f-sec-title">${escapeHtml(section.title)}</div>${itemsHtml}`;
       content.appendChild(secEl);
+      if (sIdx < page.sections.length - 1) {
+        const hr = document.createElement('div');
+        hr.className = 'section-divider';
+        content.appendChild(hr);
+      }
     });
 
     if (pIdx === currentData.pages.length - 1) {

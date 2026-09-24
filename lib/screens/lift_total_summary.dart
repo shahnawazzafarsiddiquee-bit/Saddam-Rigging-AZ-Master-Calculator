@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -93,7 +92,6 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
     final w = _n(loadWt.text);
     final rg = _n(riggingWt.text);
     final hb = _n(hookBlockWt.text);
-    final rad = _n(craneRadius.text);
     final cap = _n(chartCap.text);
     final ang = _n(slingAngleCtrl.text);
     final legs = _n(slingLegs.text).toInt().clamp(1, 4);
@@ -369,7 +367,8 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            children: _results.entries.map((e) {
+            child: Column(
+              children: _results.entries.map((e) {
               final color = _statusColor(e.value);
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -392,7 +391,8 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
                   ],
                 ),
               );
-            }).toList(),
+              }).toList(),
+            ),
           ),
         ),
         const SizedBox(height: 16),

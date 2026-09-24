@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
+import 'hardware_selector.dart';
 
 double _n(TextEditingController c) =>
     double.tryParse(c.text.trim().replaceAll(',', '.')) ?? 0;
@@ -116,7 +117,7 @@ class AdvancedCalculatorsHub extends StatelessWidget {
           'Lift type se dynamic factor aur design load',
           const DynamicLoadScreen()),
       tile(Icons.build_circle, 'Hardware Quick Selector',
-          'Load daalo: shackle + sling + hook auto suggest',
+          'Web / round / wire / chain: vertical, choker, basket, 1-4 leg',
           const HardwareSelectorScreen()),
       tile(Icons.balance, 'Multi-Point Lift Planner',
           '3 ya 4 point lift: har point ki load, sling tension',
@@ -199,7 +200,9 @@ class _TandemLiftScreenState extends State<TandemLiftScreen> {
 
   @override
   void dispose() {
-    for (final c in [load, cgA, span, hA, hB, capA, capB]) c.dispose();
+    for (final c in [load, cgA, span, hA, hB, capA, capB]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -264,7 +267,6 @@ class _SpreaderBeamScreenState extends State<SpreaderBeamScreen> {
     final sm = _n(modulus);
     final fy = _n(yld);
     if (sm > 0 && fy > 0) {
-      final m = reaction * L / 4 * 1000; // kNm → Nmm approx, rough
       final stress = (reaction * 1000 * 9.81 * L * 1000 / 4) / (sm * 1000); // N/mm2
       final util = stress / fy * 100;
       res.add(_R('Bending stress (approx): ${_f(stress, 1)} MPa'));
@@ -283,7 +285,7 @@ class _SpreaderBeamScreenState extends State<SpreaderBeamScreen> {
     final pd = _n(pinD);
     if (pd > 0) {
       // Single shear pin check: Fy_pin = 0.6 * fy * pi * d^2 / 4 (mm2)
-      final shearCap = 0.6 * fy * math.pi * pd * pd / 4 / 1000000; // ton (approx)
+      final shearCap = 0.6 * fy * math.pi * pd * pd / 4 / 9810; // N -> ton
       final lv = reaction <= shearCap ? 1 : 3;
       res.add(_R('Pin shear capacity (${_f(pd, 0)} mm single shear): ${_f(shearCap)} ton', lv));
       if (reaction > shearCap) {
@@ -297,7 +299,9 @@ class _SpreaderBeamScreenState extends State<SpreaderBeamScreen> {
 
   @override
   void dispose() {
-    for (final c in [load, span, beamWt, modulus, yld, pinD]) c.dispose();
+    for (final c in [load, span, beamWt, modulus, yld, pinD]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -389,123 +393,6 @@ class _DynamicLoadScreenState extends State<DynamicLoadScreen> {
 }
 
 // ─────────────────────────────────────────────
-//  4. HARDWARE QUICK SELECTOR
-// ─────────────────────────────────────────────
-class HardwareSelectorScreen extends StatefulWidget {
-  const HardwareSelectorScreen({super.key});
-  @override
-  State<HardwareSelectorScreen> createState() => _HardwareSelectorScreenState();
-}
-
-class _HardwareSelectorScreenState extends State<HardwareSelectorScreen> {
-  final load = TextEditingController();
-  int legs = 2;
-  int hitchType = 0; // 0=vertical/basket, 1=choker
-  List<_R> out = [];
-
-  // Shackle WLL table (Bow / Anchor) - standard grades
-  static const List<List<double>> shackleTable = [
-    [0.5, 1.0, 1.5, 2.0, 3.25, 4.75, 6.5, 8.5, 12.0, 17.0, 25.0, 35.0, 55.0],
-  ];
-  static const List<String> shackleSizes = [
-    '6mm', '8mm', '10mm', '12mm', '16mm', '19mm', '22mm', '25mm', '32mm',
-    '38mm', '45mm', '51mm', '64mm'
-  ];
-
-  // Wire rope WLL (6x36 IWRC, vertical), rough formula: WLL ≈ d²/100 ton
-  String _ropeSizeStr(double wll) {
-    final dNeed = math.sqrt(wll * 100);
-    const sizes = [8.0, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 44, 48, 52];
-    for (final s in sizes) {
-      if (s >= dNeed) return '${s.toStringAsFixed(0)} mm (WLL ≈ ${(s * s / 100).toStringAsFixed(1)} ton)';
-    }
-    return '> 52 mm: engineer se poochho';
-  }
-
-  String _shackleStr(double wll) {
-    final wllList = shackleTable[0];
-    for (int i = 0; i < wllList.length; i++) {
-      if (wllList[i] >= wll) return '${shackleSizes[i]} (WLL ${wllList[i]} ton)';
-    }
-    return '> 64 mm: rigging engineer se poochho';
-  }
-
-  void calc() {
-    final w = _n(load);
-    if (w <= 0) {
-      setState(() => out = [const _R('Load weight daalo', 3)]);
-      return;
-    }
-    // Tension per sling leg
-    double factor = hitchType == 1 ? 0.75 : 1.0; // choker reduce 25%
-    final perLeg = w / legs / factor; // tension per sling
-    // Master link / hook WLL = total load
-    final res = <_R>[
-      _R('─── Load Summary ───'),
-      _R('Total load: ${_f(w)} ton'),
-      _R('Legs: $legs, Hitch: ${hitchType == 0 ? "Vertical / Basket" : "Choker"}'),
-      _R('Tension per leg: ${_f(perLeg)} ton'),
-      _R('─── Sling ───'),
-      _R('Wire rope (6x36 IWRC): min ${_ropeSizeStr(perLeg)}', 1),
-      _R('─── Shackle ─── (har attachment point ke liye)'),
-      _R('Bow shackle: min ${_shackleStr(perLeg)}', 1),
-      _R('─── Master Link / Hook ───'),
-      _R('Master link / crane hook WLL: min ${_f(w)} ton', 1),
-    ];
-    if (hitchType == 1) {
-      res.add(const _R('Choker hitch: WLL 25% kam hoti hai — larger sling lo', 2));
-    }
-    if (legs == 2) {
-      res.add(const _R('2 leg sling: angle 60 deg se upar rakho. Angle kam ho to tension badhti hai.', 2));
-    }
-    setState(() => out = res);
-  }
-
-  @override
-  void dispose() {
-    load.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _page('Hardware Quick Selector', [
-      _field(load, 'Total load weight', suffix: 'ton'),
-      const Text('Sling legs:', style: TextStyle(color: Colors.white70)),
-      Wrap(
-        spacing: 8,
-        children: [1, 2, 3, 4]
-            .map((n) => ChoiceChip(
-                  label: Text('$n Leg'),
-                  selected: legs == n,
-                  onSelected: (_) => setState(() => legs = n),
-                ))
-            .toList(),
-      ),
-      const SizedBox(height: 12),
-      const Text('Hitch type:', style: TextStyle(color: Colors.white70)),
-      Wrap(
-        spacing: 8,
-        children: ['Vertical / Basket', 'Choker']
-            .asMap()
-            .entries
-            .map((e) => ChoiceChip(
-                  label: Text(e.value),
-                  selected: hitchType == e.key,
-                  onSelected: (_) => setState(() => hitchType = e.key),
-                ))
-            .toList(),
-      ),
-      const SizedBox(height: 16),
-      ElevatedButton(onPressed: calc, child: const Text('Suggest Hardware')),
-      _results(out),
-      _note('Ye minimum size suggestion hai. Always actual sling tag / certificate WLL confirm karo. Angle aur hitch type ke hisaab se adjust karo.'),
-      _note(_disc),
-    ]);
-  }
-}
-
-// ─────────────────────────────────────────────
 //  5. MULTI-POINT LIFT PLANNER (3 or 4 point)
 // ─────────────────────────────────────────────
 class MultiPointLiftScreen extends StatefulWidget {
@@ -568,7 +455,9 @@ class _MultiPointLiftScreenState extends State<MultiPointLiftScreen> {
 
   @override
   void dispose() {
-    for (final c in [load, cgX, cgY, lenAB, widAC, hookH]) c.dispose();
+    for (final c in [load, cgX, cgY, lenAB, widAC, hookH]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -630,9 +519,8 @@ class _BoltTorqueScreenState extends State<BoltTorqueScreen> {
     final area = math.pi * d * d / 4; // mm2 gross area
     final tensileArea = 0.75 * area; // approx stress area
     final fUlt = fy[grade] / 0.8; // approx UTS
-    final proof = 0.7 * fUlt * tensileArea / 1000000 * n; // total proof load kN → ton approx
-    final proofTon = proof / 9.81;
-    final shearCap = 0.6 * fy[grade] * tensileArea / 1000000 * n / 9.81;
+    final proofTon = 0.7 * fUlt * tensileArea * n / 9810; // N -> ton
+    final shearCap = 0.6 * fy[grade] * tensileArea * n / 9810;
     final torque = 0.2 * fy[grade] * 0.7 * tensileArea * d / 1000000; // kNm approx single bolt
     final torqueNm = torque * 1000; // Nm
 
@@ -653,7 +541,9 @@ class _BoltTorqueScreenState extends State<BoltTorqueScreen> {
 
   @override
   void dispose() {
-    for (final c in [boltD, qty, load]) c.dispose();
+    for (final c in [boltD, qty, load]) {
+      c.dispose();
+    }
     super.dispose();
   }
 

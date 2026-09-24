@@ -323,33 +323,46 @@
   @media (max-width: 600px) {
     .tabbar { padding: 7px 10px; padding-top: calc(7px + env(safe-area-inset-top, 0px)); gap: 4px; }
     .tab { font-size: 12.5px; padding: 6px 13px; }
-    .editor-pane { padding: 0.9rem 0.75rem 5.5rem; }
-    .preview-pane { padding: 0.8rem 0.4rem 3.5rem; }
+    .editor-pane { padding: 0.9rem 0.85rem 5.5rem; }
+    .preview-pane { padding: 0.8rem 0.5rem 3.5rem; }
     #previewRoot { max-width: 100%; }
+    .editor-header { padding-bottom: 0.75rem; margin-bottom: 1rem; }
     .editor-header h1 { font-size: 16px; }
     .editor-header p { font-size: 11.5px; }
+    .main-title-field { padding: 11px 14px; border-radius: 10px; }
     .main-title-input { font-size: 20px; }
-    .field-row { grid-template-columns: 1fr 80px; gap: 6px; padding: 7px 0; }
-    input.f-name, textarea.f-desc { font-size: 12px; }
-    input.f-price { font-size: 13px; }
-    .sec-head { padding: 10px 12px; }
+    .page-group-label { margin: 12px 0 8px; }
+    .sec { border-radius: 10px; }
+    .sec-head { padding: 11px 13px; }
     .sec-title-input { font-size: 13.5px; }
-    .sec-body { padding: 8px 12px 12px; }
-    .add-item-btn { font-size: 12px; padding: 8px; }
+    .sec-body { padding: 0 13px 13px; }
+    .field-row { grid-template-columns: 1fr 76px; gap: 6px; padding: 10px 0; }
+    .field-row:first-child { padding-top: 12px; }
+    input.f-name, textarea.f-desc { font-size: 12.5px; padding: 6px 8px; }
+    input.f-price { font-size: 13px; padding: 7px 4px; }
+    .add-item-btn { font-size: 12px; padding: 9px; margin-top: 10px; }
+    .del-item-btn { width: 24px; height: 24px; }
+    /* Preview */
     .sheet-content { padding: 12% 6% 4%; }
     .section-title.f-sec-title { font-size: 15px; }
+    .item { margin-bottom: 0.75rem; }
     .item-name { font-size: 14px; }
     .item-desc { font-size: 12px; }
-    .item-price { font-size: 14px; }
-    .item-text { padding-left: 48px; }
+    .item-price { font-size: 14px; gap: 2px; }
+    .dirham-icon svg { width: 11px; height: 12px; }
+    .item-text { padding-left: 58px; }
     .footnote { font-size: 10px; }
+    .section-divider { margin: 0 auto 1.8%; }
   }
 
   /* Very small phones */
   @media (max-width: 400px) {
     .tab { font-size: 12px; padding: 5px 10px; }
-    .field-row { grid-template-columns: 1fr 72px; }
+    .field-row { grid-template-columns: 1fr 68px; }
     .sheet-content { padding: 10% 5% 4%; }
+    .item-price { font-size: 13px; }
+    .item-text { padding-left: 52px; }
+    .dirham-icon svg { width: 10px; height: 11px; }
   }
 
   /* ============ PRINT ============ */
@@ -394,11 +407,12 @@
     .section-title { font-size: 11px !important; margin: 0 0 0.4rem !important; }
     .section { margin-bottom: 2% !important; }
     .item { margin-bottom: 0.4rem !important; }
-    .item-price { font-size: 9px !important; padding-top: 1px !important; }
+    .item-price { font-size: 9px !important; padding-top: 1px !important; gap: 2px !important; }
+    .dirham-icon svg { width: 8px !important; height: 9px !important; }
     .item-name { font-size: 9px !important; }
     .item-name .extra { font-size: 7px !important; }
     .item-desc { font-size: 7.5px !important; line-height: 1.35 !important; margin: 1px 0 0 !important; }
-    .item-text { padding-left: 32px !important; }
+    .item-text { padding-left: 40px !important; }
     .footnote { font-size: 6px !important; margin-top: 0.6rem !important; padding-top: 0.4rem !important; line-height: 1.5 !important; }
     .pagebreak { display: none; }
     body { background: #fff; }

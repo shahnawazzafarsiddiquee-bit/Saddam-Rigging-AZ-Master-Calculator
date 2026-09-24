@@ -514,6 +514,11 @@
         <circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
       </svg> Add Section
     </button>
+
+    <div class="footnote-field no-print">
+      <label class="footnote-label">Footer Note</label>
+      <textarea id="footnoteInput" class="footnote-input" dir="rtl" placeholder="Add footer disclaimer or notes..."></textarea>
+    </div>
   </div>
   </div>
 
@@ -1215,24 +1220,6 @@ function renderEditor() {
   if (openStates.length === allSecs.length && openStates.some(Boolean)) {
     allSecs.forEach((s, i) => { if (openStates[i]) s.classList.add('open'); });
   }
-
-  // Add footnote field at the bottom
-  const footnoteFieldDiv = document.createElement('div');
-  footnoteFieldDiv.className = 'footnote-field no-print';
-  footnoteFieldDiv.innerHTML = `<label class="footnote-label">Footer Note</label>`;
-  const footnoteInput = document.createElement('textarea');
-  footnoteInput.id = 'footnoteInput';
-  footnoteInput.className = 'footnote-input';
-  footnoteInput.dir = 'rtl';
-  footnoteInput.placeholder = 'Add footer disclaimer or notes...';
-  footnoteInput.value = currentData.footnote || '';
-  footnoteInput.addEventListener('input', e => {
-    currentData.footnote = e.target.value;
-    saveData();
-    renderPreview();
-  });
-  footnoteFieldDiv.appendChild(footnoteInput);
-  container.appendChild(footnoteFieldDiv);
 }
 
 /* ---------- render live PDF-style preview ---------- */
@@ -1312,6 +1299,14 @@ const mainTitleInput = document.getElementById('mainTitleInput');
 mainTitleInput.value = currentData.pages[0].title || 'القائمة';
 mainTitleInput.addEventListener('input', e => {
   currentData.pages[0].title = e.target.value;
+  saveData();
+  renderPreview();
+});
+
+const footnoteInput = document.getElementById('footnoteInput');
+footnoteInput.value = currentData.footnote || '';
+footnoteInput.addEventListener('input', e => {
+  currentData.footnote = e.target.value;
   saveData();
   renderPreview();
 });

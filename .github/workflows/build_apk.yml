@@ -11,6 +11,31 @@ jobs:
     env:
       HAS_UPLOAD_KEY: ${{ secrets.UPLOAD_KEYSTORE_BASE64 != '' }}
     steps:
+      - name: Check Play signing secrets
+        env:
+          S_KEYSTORE: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          S_STORE_PW: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+          S_KEY_PW: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+          S_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+        run: |
+          missing=""
+          [ -n "$S_KEYSTORE" ] || missing="$missing UPLOAD_KEYSTORE_BASE64"
+          [ -n "$S_STORE_PW" ] || missing="$missing UPLOAD_KEYSTORE_PASSWORD"
+          [ -n "$S_KEY_PW" ] || missing="$missing UPLOAD_KEY_PASSWORD"
+          [ -n "$S_ALIAS" ] || missing="$missing UPLOAD_KEY_ALIAS"
+          count=$(echo $missing | wc -w)
+          if [ "$count" = 4 ]; then
+            echo "No Play signing secrets set: building the APK only."
+          elif [ "$count" != 0 ]; then
+            echo "::error::Play signing secrets missing or empty:$missing"
+            exit 1
+          elif ! echo "$S_KEYSTORE" | base64 -d > /tmp/k.jks 2>/dev/null || [ ! -s /tmp/k.jks ]; then
+            echo "::error::UPLOAD_KEYSTORE_BASE64 is not valid base64 text. Paste the whole file content again."
+            exit 1
+          else
+            echo "All 4 Play signing secrets are set."
+          fi
+          rm -f /tmp/k.jks
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set up JDK 17
@@ -37,7 +62,7 @@ jobs:
         with:
           name: saddam-rigging-az-master-calculator-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-      - name: Build Play Store AAB (upload key)
+      - name: Build Play Store AAB (signed)
         if: env.HAS_UPLOAD_KEY == 'true'
         env:
           UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}

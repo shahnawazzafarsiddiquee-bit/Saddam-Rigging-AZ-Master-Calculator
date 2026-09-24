@@ -8,6 +8,8 @@ import 'rigging_pro.dart';
 import 'rigging_pro_db.dart';
 import 'rigging_pro2.dart';
 import 'pro2_db.dart';
+import 'advanced_calculators.dart';
+import 'lift_total_summary.dart';
 
 class _Tool {
   final String title;
@@ -58,6 +60,12 @@ List<_Section> _sections() => [
         _Tool('Voice Commands', Icons.mic,
             page: () => const VoiceScreen(),
             keys: 'voice bolo mic command speak'),
+        _Tool('Advanced Calculators', Icons.science,
+            page: () => const AdvancedCalculatorsHub(),
+            keys: 'tandem spreader dynamic shock hardware selector multi point bolt torque'),
+        _Tool('Lift Total Summary', Icons.summarize,
+            page: () => const LiftTotalSummaryScreen(),
+            keys: 'total summary sheet pdf export sign off checklist all in one'),
       ]),
       _Section('Plans & Documents', Icons.assignment, [
         _Tool('Lift Plan Generator', Icons.assignment,
@@ -114,6 +122,8 @@ List<_Section> _sections() => [
 const List<String> _quickTitles = [
   'Crane Finder (auto)',
   'Sling Length & Angle',
+  'Lift Total Summary',
+  'Advanced Calculators',
   'Lift Diagram',
   'Voice Commands',
   'Inspection Checklist',

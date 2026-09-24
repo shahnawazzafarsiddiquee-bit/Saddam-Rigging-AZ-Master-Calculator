@@ -9,11 +9,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      HAS_UPLOAD_KEY: ${{ secrets.UPLOAD_KEYSTORE_BASE64 != '' }}
+      HAS_UPLOAD_KEY: ${{ (secrets.UPLOAD_KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64) != '' }}
     steps:
       - name: Check Play signing secrets
         env:
-          S_KEYSTORE: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          S_KEYSTORE: ${{ secrets.UPLOAD_KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64 }}
           S_STORE_PW: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
           S_KEY_PW: ${{ secrets.UPLOAD_KEY_PASSWORD }}
           S_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
@@ -65,7 +65,7 @@ jobs:
       - name: Build Play Store AAB (signed)
         if: env.HAS_UPLOAD_KEY == 'true'
         env:
-          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64 }}
           UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
           UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
           UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}

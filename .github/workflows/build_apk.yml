@@ -62,6 +62,19 @@ jobs:
         with:
           name: saddam-rigging-az-master-calculator-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+      # 64-bit-only APK, zipped, small enough to share over chat/WhatsApp. Kept as a .zip so
+      # the release workflow's *.apk lookup still picks the universal APK above.
+      - name: Build small APK (arm64 only, zipped)
+        run: |
+          flutter build apk --release --build-number=${{ github.run_number }} --no-shrink --target-platform android-arm64
+          cp build/app/outputs/flutter-apk/app-release.apk saddam-rigging-arm64.apk
+          zip -9 saddam-rigging-arm64-apk.zip saddam-rigging-arm64.apk
+          ls -la saddam-rigging-arm64.apk saddam-rigging-arm64-apk.zip
+      - name: Upload small APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: saddam-rigging-arm64-apk-zip
+          path: saddam-rigging-arm64-apk.zip
       - name: Build Play Store AAB (signed)
         if: env.HAS_UPLOAD_KEY == 'true'
         env:

@@ -62,6 +62,7 @@ First release: rigging, crane and sling calculators, Hardware Quick Selector, Sy
 ```
 
 **Category:** Tools  **Tags:** Engineering, Calculator
+**Contact details** (Store settings → Store listing contact details): Email `mh66152@gmail.com`, Phone `+91 78610 22592`
 **Privacy policy URL** (PR merge hone ke baad chalega):
 
 ```

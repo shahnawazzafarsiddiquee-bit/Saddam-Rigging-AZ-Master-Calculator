@@ -45,4 +45,7 @@ If this policy changes, the updated version will be published at this same addre
 
 ## Contact
 
-For questions about this policy, contact: CONTACT_EMAIL
+For questions about this policy, contact:
+
+- Email: mh66152@gmail.com
+- Phone: +91 78610 22592

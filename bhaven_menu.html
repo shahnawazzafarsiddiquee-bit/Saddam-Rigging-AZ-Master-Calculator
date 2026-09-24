@@ -1217,7 +1217,7 @@ function renderPreview() {
         const extraHtml = item.extra ? ` <span class="extra">${escapeHtml(item.extra)}</span>` : '';
         itemsHtml += `
           <div class="item">
-            <div class="item-price"><span class="dirham-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L4 20 L12 20 C16.4 20 20 16.4 20 12 C20 7.6 16.4 4 12 4 Z M4 10 L16 10 L16 11 L4 11 Z M4 13 L16 13 L16 14 L4 14 Z"/></svg></span>${fmtPrice(item.price)} <span class="dirham-icon"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L4 20 L12 20 C16.4 20 20 16.4 20 12 C20 7.6 16.4 4 12 4 Z M4 10 L16 10 L16 11 L4 11 Z M4 13 L16 13 L16 14 L4 14 Z"/></svg></span></div>
+            <div class="item-price"><span class="dirham-icon"><svg viewBox="0 0 100 120" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M25 10 L25 110 L60 110 C85 110 95 85 95 60 C95 35 85 10 60 10 Z M10 45 L70 45 L70 55 L10 55 Z M10 65 L70 65 L70 75 L10 75 Z"/></svg></span>${fmtPrice(item.price)} <span class="dirham-icon"><svg viewBox="0 0 100 120" width="11" height="11" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M25 10 L25 110 L60 110 C85 110 95 85 95 60 C95 35 85 10 60 10 Z M10 45 L70 45 L70 55 L10 55 Z M10 65 L70 65 L70 75 L10 75 Z"/></svg></span></div>
             <div class="item-text">
               <p class="item-name">${escapeHtml(item.name)}${extraHtml}</p>
               <p class="item-desc">${escapeHtml(item.desc)}</p>

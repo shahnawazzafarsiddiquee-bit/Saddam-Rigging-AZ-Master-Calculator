@@ -178,21 +178,21 @@ class _TandemLiftScreenState extends State<TandemLiftScreen> {
     int lvB = angB <= 15 ? 1 : (angB <= 25 ? 2 : 3);
 
     final res = <_R>[
-      _R('─── Crane A ───'),
+      _R('— Crane A —'),
       _R('Hook load (vertical): ${_f(rA)} ton'),
       _R('Sling angle from vertical: ${_f(angA, 1)} deg', lvA),
       _R('Sling tension: ${_f(tA)} ton'),
       if (ca > 0)
         _R('Utilization: ${_f(rA / ca * 100, 0)}% (${_f(rA)} / ${_f(ca)} ton)',
             rA / ca <= 0.75 ? 1 : (rA / ca <= 0.9 ? 2 : 3)),
-      _R('─── Crane B ───'),
+      _R('— Crane B —'),
       _R('Hook load (vertical): ${_f(rB)} ton'),
       _R('Sling angle from vertical: ${_f(angB, 1)} deg', lvB),
       _R('Sling tension: ${_f(tB)} ton'),
       if (cb > 0)
         _R('Utilization: ${_f(rB / cb * 100, 0)}% (${_f(rB)} / ${_f(cb)} ton)',
             rB / cb <= 0.75 ? 1 : (rB / cb <= 0.9 ? 2 : 3)),
-      _R('─── Tandem Notes ───'),
+      _R('— Tandem Notes —'),
       _R('CG shift: A par ${_f(rA / w * 100, 0)}%, B par ${_f(rB / w * 100, 0)}%'),
     ];
     if (angA > 25 || angB > 25) {

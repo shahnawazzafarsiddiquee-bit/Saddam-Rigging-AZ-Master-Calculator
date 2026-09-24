@@ -182,12 +182,20 @@
     padding-top: 16px;
   }
   .item-content-col {
-    flex: 1; min-width: 0; padding: 12px 0 12px 8px; direction: rtl;
+    flex: 1; min-width: 0; padding: 10px 0 10px 8px; direction: rtl;
+    display: flex; flex-direction: column; gap: 0;
   }
+  .field-box {
+    background: #f5f3f0; border: 1px solid #e5e0d8; border-radius: 8px;
+    padding: 10px 12px; display: flex; align-items: center;
+    margin-bottom: 8px;
+  }
+  .field-box.name-box { min-height: 38px; }
+  .field-box.desc-box { align-items: flex-start; min-height: auto; }
   input.f-name {
     width: 100%; font-family: 'Cairo', sans-serif; font-size: 13.5px; font-weight: 800;
     color: var(--ink); background: transparent; border: none; outline: none;
-    direction: rtl; text-align: right; padding: 0; margin-bottom: 4px; display: block;
+    direction: rtl; text-align: right; padding: 0; display: block;
   }
   input.f-name::placeholder { color: #ccc; font-weight: 600; }
   textarea.f-desc {
@@ -341,9 +349,11 @@
     .sec-title-input { font-size: 13.5px; }
     .sec-body { padding: 8px 8px 10px; }
     .item-drag-col { padding: 12px 4px 12px 10px; }
-    .item-content-col { padding: 10px 8px 10px 0; }
+    .item-content-col { padding: 9px 0 9px 0; }
     input.f-name { font-size: 13px; }
     textarea.f-desc { font-size: 11.5px; }
+    .field-box { padding: 9px 10px; margin-bottom: 7px; }
+    .field-box.name-box { min-height: 36px; }
     .item-price-col { width: 62px; padding: 8px 6px; }
     input.f-price { font-size: 16px; }
     .item-del-col { padding: 12px 10px 12px 6px; }
@@ -1048,9 +1058,13 @@ function renderEditor() {
         dragCol.className = 'item-drag-col';
         dragCol.innerHTML = `<span class="drag-dots"><svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor"><circle cx="2" cy="2" r="1.5"/><circle cx="8" cy="2" r="1.5"/><circle cx="2" cy="7" r="1.5"/><circle cx="8" cy="7" r="1.5"/><circle cx="2" cy="12" r="1.5"/><circle cx="8" cy="12" r="1.5"/></svg></span>`;
 
-        // Content col (name + desc)
+        // Content col (name + desc in separate boxes)
         const contentCol = document.createElement('div');
         contentCol.className = 'item-content-col';
+
+        // Name box
+        const nameBox = document.createElement('div');
+        nameBox.className = 'field-box name-box';
         const nameInput = document.createElement('input');
         nameInput.className = 'f-name';
         nameInput.value = item.name;
@@ -1059,7 +1073,12 @@ function renderEditor() {
           item.name = e.target.value;
           saveData(); renderPreview();
         });
-        contentCol.appendChild(nameInput);
+        nameBox.appendChild(nameInput);
+        contentCol.appendChild(nameBox);
+
+        // Description box
+        const descBox = document.createElement('div');
+        descBox.className = 'field-box desc-box';
         const descInput = document.createElement('textarea');
         descInput.className = 'f-desc';
         descInput.value = item.desc;
@@ -1071,7 +1090,8 @@ function renderEditor() {
           e.target.style.height = e.target.scrollHeight + 'px';
           saveData(); renderPreview();
         });
-        contentCol.appendChild(descInput);
+        descBox.appendChild(descInput);
+        contentCol.appendChild(descBox);
 
         // Price col (coin icon + price input + AED)
         const priceCol = document.createElement('div');

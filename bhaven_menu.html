@@ -452,17 +452,20 @@
     .app { display: block; }
     .view { display: none !important; }
     #previewView, #previewView.view { display: block !important; }
-    .preview-pane { padding: 0; display: block; height: auto; overflow: visible; }
+    .preview-pane { padding: 0; display: block; height: auto; overflow: visible; background-color: #ffffff !important; }
     .sheet {
       box-shadow: none; max-width: none; border-radius: 0;
       width: 5.4in; height: 9.6in;
       page-break-inside: avoid; page-break-after: always;
       -webkit-print-color-adjust: exact; print-color-adjust: exact;
       overflow: hidden;
+      background-image: none !important;
+      background-color: #ffffff !important;
     }
     .sheet:last-of-type { page-break-after: auto; }
     .sheet-content {
       padding: 12% 6% 2%;
+      background-color: #ffffff !important;
     }
     .page-title { margin: 0 0 3% !important; }
     .page-title h1 { font-size: 22px !important; line-height: 1.3 !important; }
@@ -477,7 +480,8 @@
     .item-text { padding-left: 40px !important; }
     .footnote { font-size: 6px !important; margin-top: 0.6rem !important; padding-top: 0.4rem !important; line-height: 1.5 !important; }
     .pagebreak { display: none; }
-    body { background: #fff; }
+    body { background: #ffffff !important; }
+    #previewRoot { background: #ffffff !important; }
   }
 
 .food-title-fast-update {

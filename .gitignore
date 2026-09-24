@@ -1,0 +1,12 @@
+# Flutter / Dart build output
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+android/local.properties
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
+# Play Store upload key: never commit
+android/key.properties
+*.jks
+upload-keystore*

@@ -8,7 +8,34 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_UPLOAD_KEY: ${{ (secrets.UPLOAD_KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64) != '' }}
     steps:
+      - name: Check Play signing secrets
+        env:
+          S_KEYSTORE: ${{ secrets.UPLOAD_KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64 }}
+          S_STORE_PW: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+          S_KEY_PW: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+          S_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+        run: |
+          missing=""
+          [ -n "$S_KEYSTORE" ] || missing="$missing UPLOAD_KEYSTORE_BASE64"
+          [ -n "$S_STORE_PW" ] || missing="$missing UPLOAD_KEYSTORE_PASSWORD"
+          [ -n "$S_KEY_PW" ] || missing="$missing UPLOAD_KEY_PASSWORD"
+          [ -n "$S_ALIAS" ] || missing="$missing UPLOAD_KEY_ALIAS"
+          count=$(echo $missing | wc -w)
+          if [ "$count" = 4 ]; then
+            echo "No Play signing secrets set: building the APK only."
+          elif [ "$count" != 0 ]; then
+            echo "::error::Play signing secrets missing or empty:$missing"
+            exit 1
+          elif ! echo "$S_KEYSTORE" | base64 -d > /tmp/k.jks 2>/dev/null || [ ! -s /tmp/k.jks ]; then
+            echo "::error::UPLOAD_KEYSTORE_BASE64 is not valid base64 text. Paste the whole file content again."
+            exit 1
+          else
+            echo "All 4 Play signing secrets are set."
+          fi
+          rm -f /tmp/k.jks
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set up JDK 17
@@ -35,3 +62,39 @@ jobs:
         with:
           name: saddam-rigging-az-master-calculator-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+      # 64-bit-only APK, zipped, small enough to share over chat/WhatsApp. Kept as a .zip so
+      # the release workflow's *.apk lookup still picks the universal APK above.
+      - name: Build small APK (arm64 only, zipped)
+        run: |
+          flutter build apk --release --build-number=${{ github.run_number }} --no-shrink --target-platform android-arm64
+          cp build/app/outputs/flutter-apk/app-release.apk saddam-rigging-arm64.apk
+          zip -9 saddam-rigging-arm64-apk.zip saddam-rigging-arm64.apk
+          ls -la saddam-rigging-arm64.apk saddam-rigging-arm64-apk.zip
+      - name: Upload small APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: saddam-rigging-arm64-apk-zip
+          path: saddam-rigging-arm64-apk.zip
+      - name: Build Play Store AAB (signed)
+        if: env.HAS_UPLOAD_KEY == 'true'
+        env:
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64 }}
+          UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+        run: |
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+          {
+            echo "storeFile=upload-keystore.jks"
+            echo "storePassword=$UPLOAD_KEYSTORE_PASSWORD"
+            echo "keyAlias=$UPLOAD_KEY_ALIAS"
+            echo "keyPassword=$UPLOAD_KEY_PASSWORD"
+          } > android/key.properties
+          flutter build appbundle --release --build-number=${{ github.run_number }}
+          rm -f android/key.properties android/app/upload-keystore.jks
+      - name: Upload Play Store AAB
+        if: env.HAS_UPLOAD_KEY == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: saddam-rigging-play-store-aab
+          path: build/app/outputs/bundle/release/app-release.aab

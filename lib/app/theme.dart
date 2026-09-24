@@ -26,11 +26,28 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.industrialGrey,
       primaryColor: AppColors.navy,
+      // Primary is orange, not navy: FilledButton, TextButton, switches, checkboxes and
+      // progress bars take it, and navy on the dark background was unreadable.
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.navy,
+        primary: AppColors.safetyOrange,
+        onPrimary: Colors.black,
         secondary: AppColors.safetyOrange,
+        onSecondary: Colors.black,
         surface: AppColors.cardGrey,
         error: AppColors.danger,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.safetyOrange,
+          foregroundColor: Colors.black,
+          disabledBackgroundColor: Colors.white24,
+          disabledForegroundColor: Colors.white70,
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: AppColors.safetyOrange),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.navy,

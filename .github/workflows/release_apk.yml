@@ -19,7 +19,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh run download ${{ github.event.workflow_run.id }} --repo ${{ github.repository }} --dir out
-          find out -name "*.apk"
+          find out -name "*.apk" -o -name "*.aab"
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -27,5 +27,8 @@ jobs:
           apk=$(find out -name "*.apk" | head -1)
           if [ -z "$apk" ]; then echo "APK nahi mili"; exit 1; fi
           cp "$apk" saddam-rigging.apk
+          files="saddam-rigging.apk"
+          aab=$(find out -name "*.aab" | head -1)
+          if [ -n "$aab" ]; then cp "$aab" saddam-rigging.aab; files="$files saddam-rigging.aab"; fi
           gh release delete latest --repo ${{ github.repository }} --cleanup-tag --yes || true
-          gh release create latest saddam-rigging.apk --repo ${{ github.repository }} --target ${{ github.event.workflow_run.head_sha }} --title "Latest APK (build ${{ github.event.workflow_run.run_number }})" --notes "Commit ${{ github.event.workflow_run.head_sha }}" --latest
+          gh release create latest $files --repo ${{ github.repository }} --target ${{ github.event.workflow_run.head_sha }} --title "Latest APK (build ${{ github.event.workflow_run.run_number }})" --notes "Commit ${{ github.event.workflow_run.head_sha }}" --latest

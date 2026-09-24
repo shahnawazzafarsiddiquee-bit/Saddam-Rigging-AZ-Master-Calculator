@@ -22,9 +22,18 @@ if (flutterVersionName == null) {
     flutterVersionName = "1.0.0"
 }
 
+// Play Store upload key. key.properties is written by CI from GitHub secrets and is never committed.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withReader("UTF-8") { reader ->
+        keystoreProperties.load(reader)
+    }
+}
+
 android {
     namespace "com.saddam.rigging.azmaster"
-    compileSdk 35
+    compileSdk flutter.compileSdkVersion
     ndkVersion "25.1.8937393"
 
     compileOptions {
@@ -43,18 +52,28 @@ android {
     defaultConfig {
         applicationId "com.saddam.rigging.azmaster"
         minSdkVersion 23
-        targetSdkVersion 34
+        targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
     }
 
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+                storeFile file(keystoreProperties["storeFile"])
+                storePassword keystoreProperties["storePassword"]
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Signed with the debug key for now so `flutter build apk --release`
-            // and the GitHub Actions workflow produce an installable APK out of the box.
-            // Replace with your own signing config before publishing to Play Store.
-            signingConfig signingConfigs.debug
+            // Without key.properties (the sideload APK build) this falls back to the fixed
+            // debug key so existing installs keep updating; the Play AAB uses the upload key.
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
             minifyEnabled false
             shrinkResources false
         }

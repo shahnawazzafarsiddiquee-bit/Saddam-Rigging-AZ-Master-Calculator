@@ -226,11 +226,6 @@
     text-align: center; border: none; background: transparent; outline: none;
     color: var(--ink); padding: 0; direction: ltr; line-height: 1;
   }
-  .price-aed-label {
-    display: inline-flex; align-items: center; justify-content: center;
-    color: var(--muted); cursor: help;
-  }
-  .price-aed-label svg { width: 16px; height: 16px; stroke-width: 2; }
   .item-del-col {
     display: flex; align-items: flex-start; padding: 14px 8px 14px 12px; flex-shrink: 0;
     padding-top: 16px;
@@ -342,7 +337,6 @@
     white-space: nowrap; padding-top: 3px; direction: ltr;
     display: flex; align-items: center; gap: 3px;
   }
-  .dirham-icon { display: inline-flex; align-items: center; flex-shrink: 0; margin: 0 3px; }
   .item-text { padding-left: 66px; }
   .item-name { font-weight: 700; font-size: 16px; color: #111; text-align: right; margin: 0; }
   .item-name .extra { font-weight: 400; font-size: 12px; color: var(--muted); }
@@ -407,7 +401,6 @@
     .item-name { font-size: 14px; }
     .item-desc { font-size: 12px; }
     .item-price { font-size: 14px; gap: 2px; }
-    .dirham-icon svg { width: 11px; height: 12px; }
     .item-text { padding-left: 58px; }
     .footnote { font-size: 10px; }
     .section-divider { margin: 0 auto 1.8%; }
@@ -423,7 +416,6 @@
     .sheet-content { padding: 10% 5% 4%; }
     .item-price { font-size: 13px; }
     .item-text { padding-left: 52px; }
-    .dirham-icon svg { width: 10px; height: 11px; }
   }
 
   /* ============ PRINT ============ */
@@ -473,7 +465,6 @@
     .section { margin-bottom: 2% !important; }
     .item { margin-bottom: 0.4rem !important; }
     .item-price { font-size: 9px !important; padding-top: 1px !important; gap: 2px !important; }
-    .dirham-icon svg { width: 8px !important; height: 9px !important; }
     .item-name { font-size: 9px !important; }
     .item-name .extra { font-size: 7px !important; }
     .item-desc { font-size: 7.5px !important; line-height: 1.35 !important; margin: 1px 0 0 !important; }
@@ -1164,10 +1155,6 @@ function renderEditor() {
           saveData(); renderPreview();
         });
         priceCol.appendChild(priceInput);
-        const aedLabel = document.createElement('span');
-        aedLabel.className = 'price-aed-label';
-        aedLabel.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8M6 14.5c.5 1 1.5 2 3 2M18 14.5c-.5 1-1.5 2-3 2M9 9a1.5 1.5 0 0 1 1.5-1.5M13.5 9A1.5 1.5 0 0 0 12 7.5"/></svg>`;
-        priceCol.appendChild(aedLabel);
 
         // Delete col
         const delCol = document.createElement('div');

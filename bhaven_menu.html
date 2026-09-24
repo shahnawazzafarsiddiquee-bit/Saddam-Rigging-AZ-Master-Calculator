@@ -1187,12 +1187,10 @@ function renderEditor() {
       secCounter++;
     });
   });
-  // restore previous open/closed state, or open first section by default
+  // restore previous open/closed state
   const allSecs = container.querySelectorAll('.sec');
   if (openStates.length === allSecs.length && openStates.some(Boolean)) {
     allSecs.forEach((s, i) => { if (openStates[i]) s.classList.add('open'); });
-  } else if (allSecs.length) {
-    allSecs[0].classList.add('open');
   }
 }
 

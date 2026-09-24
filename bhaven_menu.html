@@ -282,6 +282,27 @@
     transition: border-color .15s ease;
   }
   .main-title-input:focus { border-bottom-color: var(--teal); }
+  .footnote-field {
+    margin-bottom: 1.4rem;
+    background: #f5f3f0;
+    border-radius: 12px; padding: 14px 18px;
+    border: 1px solid #e5e0d8;
+  }
+  .footnote-label {
+    display: block; font-size: 10.5px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;
+    direction: ltr; text-align: left;
+  }
+  .footnote-input {
+    font-family: 'Cairo', sans-serif; font-size: 12px; font-weight: 400;
+    color: var(--ink); background: transparent;
+    border: none; outline: none;
+    width: 100%; padding: 0; text-align: right; direction: rtl;
+    resize: none; line-height: 1.5; min-height: 80px;
+    transition: color .15s ease;
+  }
+  .footnote-input::placeholder { color: #ccc; }
+  .footnote-input:focus { color: var(--teal); }
 
   /* ============ PREVIEW: EXACT TEMPLATE PAGE ============ */
   .sheet {
@@ -486,6 +507,12 @@
       <label class="main-title-label">Main Title</label>
       <input id="mainTitleInput" class="main-title-input" type="text" dir="rtl" />
     </div>
+
+    <div class="footnote-field no-print">
+      <label class="footnote-label">Footer Note</label>
+      <textarea id="footnoteInput" class="footnote-input" dir="rtl" placeholder="Add footer disclaimer or notes..."></textarea>
+    </div>
+
     <div id="sectionsContainer"></div>
     <button class="btn-add-section no-print" id="addSectionBtn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1272,6 +1299,14 @@ const mainTitleInput = document.getElementById('mainTitleInput');
 mainTitleInput.value = currentData.pages[0].title || 'القائمة';
 mainTitleInput.addEventListener('input', e => {
   currentData.pages[0].title = e.target.value;
+  saveData();
+  renderPreview();
+});
+
+const footnoteInput = document.getElementById('footnoteInput');
+footnoteInput.value = currentData.footnote || '';
+footnoteInput.addEventListener('input', e => {
+  currentData.footnote = e.target.value;
   saveData();
   renderPreview();
 });

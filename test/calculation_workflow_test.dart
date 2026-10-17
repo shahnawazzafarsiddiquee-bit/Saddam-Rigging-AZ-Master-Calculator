@@ -10,6 +10,7 @@ import 'package:saddam_rigging_az_master_calculator/screens/rigging_pro2.dart';
 import 'package:saddam_rigging_az_master_calculator/calculators/wire_rope.dart';
 
 void main() {
+  WidgetController.hitTestWarningShouldBeFatal = true;
   Future<void> open(WidgetTester tester, Widget screen) async {
     tester.view.physicalSize = const Size(432, 960);
     tester.view.devicePixelRatio = 1;
@@ -26,14 +27,17 @@ void main() {
       (w) => w is TextField && w.decoration?.labelText == label,
     );
     await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
     await tester.enterText(field, value);
     await tester.pump();
   }
 
   Future<void> calculate(WidgetTester tester) async {
-    tester.testTextInput.hide();
+    await tester.testTextInput.hide();
+    await tester.pumpAndSettle();
     final button = find.widgetWithText(ElevatedButton, 'CALCULATE');
     await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
     await tester.tap(button);
     await tester.pumpAndSettle();
   }
@@ -56,6 +60,7 @@ void main() {
       );
       final checkbox = find.byType(Checkbox);
       await tester.ensureVisible(checkbox);
+      await tester.pumpAndSettle();
       await tester.tap(checkbox);
       await tester.pump();
       await calculate(tester);
@@ -141,7 +146,8 @@ void main() {
     (tester) async {
       await open(tester, const VoiceScreen());
       await tester.enterText(find.byType(TextField), 'wind 5');
-      tester.testTextInput.hide();
+      await tester.testTextInput.hide();
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Chalao'));
       await tester.pumpAndSettle();
       expect(

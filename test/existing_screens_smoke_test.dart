@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:saddam_rigging_az_master_calculator/app/routes.dart';
 import 'package:saddam_rigging_az_master_calculator/app/theme.dart';
 import 'package:saddam_rigging_az_master_calculator/screens/rigging_advanced.dart';
@@ -17,6 +18,7 @@ import 'package:saddam_rigging_az_master_calculator/screens/lift_total_summary.d
 // data. They do not claim to test camera, OCR, file sharing, BLE or device APIs.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  databaseFactory = databaseFactorySqflitePlugin;
   var nextDatabaseId = 0;
   const sqliteChannel = MethodChannel('com.tekartik.sqflite');
   setUp(() {

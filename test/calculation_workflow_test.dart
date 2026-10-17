@@ -33,7 +33,7 @@ void main() {
   }
 
   Future<void> calculate(WidgetTester tester) async {
-    await tester.testTextInput.hide();
+    tester.testTextInput.hide();
     await tester.pumpAndSettle();
     final button = find.widgetWithText(ElevatedButton, 'CALCULATE');
     await tester.ensureVisible(button);
@@ -146,7 +146,7 @@ void main() {
     (tester) async {
       await open(tester, const VoiceScreen());
       await tester.enterText(find.byType(TextField), 'wind 5');
-      await tester.testTextInput.hide();
+      tester.testTextInput.hide();
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Chalao'));
       await tester.pumpAndSettle();

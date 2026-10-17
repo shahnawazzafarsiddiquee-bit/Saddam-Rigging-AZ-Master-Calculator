@@ -129,20 +129,10 @@ class _LiftPlanPdfScreenState extends State<LiftPlanPdfScreen> {
       warns.add('Sling 52 mm se bada chahiye: spreader beam / engineer');
     }
 
-    String windTxt = 'Not entered';
-    if (kmh > 0) {
-      if (kmh <= 20) {
-        windTxt = '${_f(kmh, 0)} km/h - OK';
-      } else if (kmh <= 32) {
-        windTxt = '${_f(kmh, 0)} km/h - CAUTION (tag line, savdhani)';
-        warns.add('Wind 20-32 km/h: savdhani, tag line');
-      } else {
-        windTxt = '${_f(kmh, 0)} km/h - NO LIFT (above 32 km/h)';
-        warns.add('Wind 32 km/h se upar: lifting band');
-      }
-    } else {
-      warns.add('Wind speed daali nahi gayi');
-    }
+    final windTxt = wind.text.trim().isEmpty
+        ? 'INCOMPLETE - no wind record'
+        : '${_f(kmh,1)} km/h - INCOMPLETE: approved wind/gust limit source not configured';
+    warns.add('Wind and gust require manufacturer/project limit verification, timestamp and source. No universal limit is applied.');
 
     setState(() => out = [
           _R('Total hook load: ${_f(total)} ton'),

@@ -1,9 +1,9 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../app/theme.dart';
+import '../services/calculation_engine.dart';
 
 // ─────────────────────────────────────────────
 //  LIFT TOTAL SUMMARY SHEET
@@ -11,9 +11,7 @@ import '../app/theme.dart';
 //  fill karo aur PDF export karo.
 // ─────────────────────────────────────────────
 
-double _n(String s) => double.tryParse(s.trim().replaceAll(',', '.')) ?? 0;
 String _f(double x, [int d = 2]) => x.toStringAsFixed(d);
-double _rad(double d) => d * math.pi / 180;
 
 class LiftTotalSummaryScreen extends StatefulWidget {
   const LiftTotalSummaryScreen({super.key});
@@ -33,13 +31,14 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
   final prepBy = TextEditingController();
   final jobDate = TextEditingController(
       text:
-          '${DateTime.now().day.toString().padLeft(2, '0')}/${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().year}');
+          '${DateTime.now().day.toString().padLeft(2, '0')}/${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().year}',
+  );
 
   // ─── Load ───
   final loadDesc = TextEditingController();
   final loadWt = TextEditingController();
-  final riggingWt = TextEditingController(text: '0.5');
-  final hookBlockWt = TextEditingController(text: '0.2');
+  final riggingWt = TextEditingController();
+  final hookBlockWt = TextEditingController();
 
   // ─── Crane ───
   final craneModel = TextEditingController();
@@ -89,64 +88,81 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
   }
 
   void _calculate() {
-    final w = _n(loadWt.text);
-    final rg = _n(riggingWt.text);
-    final hb = _n(hookBlockWt.text);
-    final cap = _n(chartCap.text);
-    final ang = _n(slingAngleCtrl.text);
-    final legs = _n(slingLegs.text).toInt().clamp(1, 4);
-    final wind = _n(windSpeed.text);
-
-    final total = w + rg + hb;
-    final util = cap > 0 ? total / cap * 100 : 0.0;
-    final tension = ang > 0 && ang < 90
-        ? w / (legs * math.sin(_rad(ang)))
-        : 0.0;
-    final angleFactor = ang > 0 ? 1 / math.sin(_rad(ang)) : 0.0;
-
-    String windStatus = '';
-    if (wind > 0) {
-      if (wind <= 20) {
-        windStatus = 'SAFE ($wind km/h ≤ 20)';
-      } else if (wind <= 32) {
-        windStatus = 'CAUTION ($wind km/h, tag line use karo)';
-      } else {
-        windStatus = 'STOP LIFT ($wind km/h > 32 km/h limit)';
+    try {
+      double number(TextEditingController c, String label) {
+        final value = double.tryParse(c.text.trim().replaceAll(',', '.'));
+        if (value == null)
+          throw ArgumentError(
+            'Enter $label. Explicit zero is required for zero accessory mass.',
+          );
+        CalculationEngine.finite(value, label, minimum: 0);
+        return value;
       }
-    }
 
-    String utilStatus = '';
-    if (cap > 0) {
-      if (util <= 75) {
-        utilStatus = '${_f(util, 0)}% — SAFE (≤ 75%)';
-      } else if (util <= 85) {
-        utilStatus = '${_f(util, 0)}% — CAUTION (75–85%, critical check)';
-      } else if (util <= 100) {
-        utilStatus = '${_f(util, 0)}% — HIGH (> 85%, engineer required)';
-      } else {
-        utilStatus = '${_f(util, 0)}% — OVERLOAD! Lift mat karo';
+      final w = number(loadWt, 'payload weight');
+      final rg = number(riggingWt, 'all rigging/accessory weight');
+      final hb = number(hookBlockWt, 'hook block weight');
+      final total =
+          CalculationEngine.grossLoadKg(w * 1000, [rg * 1000, hb * 1000]) /
+          1000;
+      final legs = int.tryParse(slingLegs.text);
+      if (legs == null || legs < 1 || legs > 4)
+        throw ArgumentError('Sling legs must be 1 to 4.');
+      final effective = legs > 2 ? 2 : legs;
+      final sling = CalculationEngine.sling(
+        loadKg: w * 1000,
+        effectiveLegs: effective,
+        angleDegrees: number(slingAngleCtrl, 'sling angle'),
+      );
+      String crane =
+          'INCOMPLETE - verified crane chart and configuration required';
+      if (chartCap.text.trim().isNotEmpty) {
+        final check = CalculationEngine.craneUtilization(
+          grossKg: total * 1000,
+          capacityKg: number(chartCap, 'chart capacity') * 1000,
+          chartSource: 'Unverified manual entry',
+        );
+        crane =
+            '${_f(check.values['utilizationPercent']!, 1)}% - ${check.statusLabel}';
       }
-    }
+      String wind =
+          'INCOMPLETE - wind measurement, gust and approved limit source required';
+      if (windSpeed.text.trim().isNotEmpty) {
+        wind =
+            '${_f(number(windSpeed, 'wind speed'), 1)} km/h - INCOMPLETE: verify manufacturer/project limits and gusts';
+      }
 
     setState(() {
       _calculated = true;
       _results = {
-        'Total Hook Load': '${_f(total)} ton',
-        'Load': '${_f(w)} ton',
-        'Rigging + Block': '${_f(rg + hb)} ton',
-        'Crane Utilization': cap > 0 ? utilStatus : 'Chart capacity nahi di',
-        'Sling Tension per Leg': tension > 0 ? '${_f(tension)} ton' : 'Angle daalo',
-        'Angle Factor': ang > 0 ? '${_f(angleFactor, 3)}x' : '—',
-        'Wind Status': windStatus.isEmpty ? 'Wind speed nahi di' : windStatus,
-      };
-    });
+          'Lift Status': 'INCOMPLETE - VERIFICATION AND AUTHORIZATION REQUIRED',
+          'Total Hook Load': '${_f(total, 3)} ton',
+          'Load': '${_f(w, 3)} ton',
+          'Rigging + Block': '${_f(rg + hb, 3)} ton',
+          'Crane Utilization': crane,
+          'Sling Tension per Leg':
+              '${_f(sling.values['requiredWllKg']! / 1000, 3)} ton',
+          'Angle Factor': '${_f(sling.values['angleFactor']!, 3)}x',
+          'Load-sharing Basis':
+              '$effective effective legs; symmetric preliminary check only',
+          'Sling WLL': 'INCOMPLETE - tag and actual configuration WLL required',
+          'Wind Status': wind,
+        };
+      });
+    } on ArgumentError catch (e) {
+      setState(() {
+        _calculated = true;
+        _results = {'Status': 'INCOMPLETE - ${e.message}'};
+      });
+    }
   }
 
-  // ─── Status color helper ───
-  Color _statusColor(String v) {
-    if (v.contains('OVERLOAD') || v.contains('STOP')) return Colors.redAccent;
-    if (v.contains('CAUTION') || v.contains('HIGH')) return Colors.orangeAccent;
-    if (v.contains('SAFE') || v.contains('≤')) return Colors.greenAccent;
+  Color _statusColor(String value) {
+    if (value.contains('NOT ACCEPTABLE') || value.contains('OVERLOAD'))
+      return AppColors.danger;
+    if (value.contains('INCOMPLETE') || value.contains('REVIEW'))
+      return AppColors.warning;
+    if (value.startsWith('ACCEPTABLE -')) return AppColors.success;
     return AppColors.textLight;
   }
 
@@ -167,7 +183,9 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
             children: [
               pw.Text('LIFT TOTAL SUMMARY',
                   style: pw.TextStyle(
-                      fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                      fontSize: 18, fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
               pw.Text(dateStr),
             ],
           ),
@@ -208,7 +226,11 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
           ['Size', shackleSize.text],
           ['WLL', '${shackleWLL.text} ton'],
         ]),
-        _pdfSection('WIND CHECK', [
+        _pdfSection(
+            'CALCULATION STATUS & LIMITATIONS',
+            _results.entries.map((e) => [e.key, e.value]).toList(),
+          ),
+          _pdfSection('WIND CHECK', [
           ['Wind Speed', '${windSpeed.text} km/h'],
           ['Status', _results['Wind Status'] ?? ''],
         ]),
@@ -220,17 +242,22 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text('SIGN-OFF',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
               pw.SizedBox(height: 10),
               pw.Row(children: [
                 pw.Expanded(child: pw.Text('Rigger: ___________________')),
-                pw.Expanded(child: pw.Text('Supervisor: ___________________')),
-              ]),
+                pw.Expanded(child: pw.Text('Supervisor: ___________________'),
+                    ),
+                  ],
+                ),
               pw.SizedBox(height: 8),
               pw.Row(children: [
-                pw.Expanded(child: pw.Text('Engineer: ___________________')),
+                pw.Expanded(child: pw.Text('Engineer: ___________________'),
+                    ),
                 pw.Expanded(child: pw.Text('Date: ___________________')),
-              ]),
+              ],
+                ),
             ],
           ),
         ),
@@ -240,7 +267,8 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
           style: const pw.TextStyle(fontSize: 9),
         ),
       ],
-    ));
+    ),
+    );
 
     await Printing.layoutPdf(onLayout: (_) => pdf.save());
   }
@@ -252,7 +280,9 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
           style: pw.TextStyle(
               fontSize: 12,
               fontWeight: pw.FontWeight.bold,
-              decoration: pw.TextDecoration.underline)),
+              decoration: pw.TextDecoration.underline,
+          ),
+        ),
       pw.SizedBox(height: 6),
       pw.Table(
         border: pw.TableBorder.all(width: 0.5),
@@ -266,22 +296,34 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
                       padding: const pw.EdgeInsets.all(4),
                       child: pw.Text(r[0],
                           style: pw.TextStyle(
-                              fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                              fontWeight: pw.FontWeight.bold, fontSize: 10,
+                        ),
+                      ),
+                    ),
                   pw.Padding(
                       padding: const pw.EdgeInsets.all(4),
-                      child: pw.Text(r[1], style: const pw.TextStyle(fontSize: 10))),
-                ]))
-            .toList(),
-      ),
-    ]);
+                      child: pw.Text(r[1], style: const pw.TextStyle(fontSize: 10),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
   }
 
   Widget _inputField(TextEditingController c, String label,
-      {String? suffix, TextInputType? type}) {
+      {String? suffix, TextInputType? type,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: c,
+        onChanged: (_) {
+          if (_calculated) setState(() => _calculated = false);
+        },
         keyboardType: type ??
             (suffix != null
                 ? const TextInputType.numberWithOptions(decimal: true)
@@ -292,7 +334,8 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
           border: const OutlineInputBorder(),
           isDense: true,
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14,
+          ),
         ),
       ),
     );
@@ -304,7 +347,9 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
             style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
-                color: AppColors.safetyOrange)),
+                color: AppColors.safetyOrange,
+      ),
+    ),
       );
 
   Widget _tabJob() => ListView(padding: const EdgeInsets.all(16), children: [
@@ -321,7 +366,8 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
         _inputField(loadWt, 'Load Weight', suffix: 'ton'),
         _inputField(riggingWt, 'Rigging (slings + hardware)', suffix: 'ton'),
         _inputField(hookBlockWt, 'Hook block weight', suffix: 'ton'),
-      ]);
+      ],
+  );
 
   Widget _tabCrane() => ListView(padding: const EdgeInsets.all(16), children: [
         _sectionTitle('Crane Details'),
@@ -332,7 +378,8 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
         _inputField(chartCap, 'Chart Capacity at this radius', suffix: 'ton'),
         _sectionTitle('Wind'),
         _inputField(windSpeed, 'Wind Speed', suffix: 'km/h'),
-      ]);
+      ],
+  );
 
   Widget _tabRigging() => ListView(padding: const EdgeInsets.all(16), children: [
         _sectionTitle('Slings'),
@@ -344,7 +391,8 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
         _sectionTitle('Shackle'),
         _inputField(shackleSize, 'Shackle Size', type: TextInputType.text),
         _inputField(shackleWLL, 'Shackle WLL', suffix: 'ton'),
-      ]);
+      ],
+  );
 
   Widget _tabSummary() {
     return ListView(padding: const EdgeInsets.all(16), children: [
@@ -377,7 +425,9 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
                   children: [
                     Text(e.key,
                         style: const TextStyle(
-                            color: Colors.white70, fontSize: 14)),
+                            color: Colors.white70, fontSize: 14,
+                          ),
+                        ),
                     Flexible(
                       child: Text(
                         e.value,
@@ -385,7 +435,8 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
                         style: TextStyle(
                             color: color,
                             fontSize: 14,
-                            fontWeight: FontWeight.bold),
+                            fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ),
                   ],
@@ -409,7 +460,8 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
         'DISCLAIMER: Ye sirf estimate hain. Final decision crane load chart, sling tag/certificate aur lift plan (competent person) ke hisaab se lo.',
         style: TextStyle(color: Colors.white38, fontSize: 12),
       ),
-    ]);
+    ],
+    );
   }
 
   Widget _liftSafetyChecklist() {
@@ -432,19 +484,24 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
             style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.safetyOrange,
-                fontSize: 15)),
+                fontSize: 15,
+          ),
+        ),
         const SizedBox(height: 8),
         ...items.map((item) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
                   const Icon(Icons.check_box_outline_blank,
-                      color: AppColors.safetyOrange, size: 20),
+                      color: AppColors.safetyOrange, size: 20,
+                ),
                   const SizedBox(width: 10),
-                  Expanded(child: Text(item, style: const TextStyle(fontSize: 13))),
-                ],
-              ),
-            )),
+                  Expanded(child: Text(item, style: const TextStyle(fontSize: 13)),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -456,9 +513,11 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
         title: const Column(
           children: [
             Text('Lift Total Summary',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            ),
             Text('Poori lift ek jagah',
-                style: TextStyle(fontSize: 11, color: Colors.white70)),
+                style: TextStyle(fontSize: 11, color: Colors.white70),
+            ),
           ],
         ),
         actions: [
@@ -487,8 +546,7 @@ class _LiftTotalSummaryScreenState extends State<LiftTotalSummaryScreen>
           _tabJob(),
           _tabCrane(),
           _tabRigging(),
-          _tabSummary(),
-        ],
+          _tabSummary()],
       ),
     );
   }

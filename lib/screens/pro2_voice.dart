@@ -46,13 +46,7 @@ Future<List<_R>> _runVoice(String raw) async {
   final wd = RegExp(r'wind\D*(\d+(?:\.\d+)?)').firstMatch(t);
   if (wd != null) {
     final k = double.parse(wd.group(1)!);
-    if (k <= 20) {
-      return [_R('Wind ${_f(k, 0)} km/h: normal, lifting theek', 1)];
-    }
-    if (k <= 32) {
-      return [_R('Wind ${_f(k, 0)} km/h: savdhani, tag line lagao', 2)];
-    }
-    return [_R('Wind ${_f(k, 0)} km/h: 32 se upar, lifting band karo', 3)];
+    return [_R('Wind ${_f(k,1)} km/h - INCOMPLETE. Approved crane/project wind and gust limits, source and timestamp required.',2)];
   }
 
   if (t.contains('crane')) {

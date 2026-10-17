@@ -1,6 +1,10 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
 import 'rigging_pro.dart';
+import '../services/calculation_engine.dart';
+import '../app/calculation_details.dart';
 
 double _n(TextEditingController c) =>
     double.tryParse(c.text.trim().replaceAll(',', '.')) ?? 0;
@@ -57,7 +61,8 @@ Widget _results(List<_R> rs) {
                       color: _col(r.lvl),
                     ),
                   ),
-                ))
+                ),
+            )
             .toList(),
       ),
     ),
@@ -67,8 +72,7 @@ Widget _results(List<_R> rs) {
 Widget _note(String s) {
   return Padding(
     padding: const EdgeInsets.only(top: 12),
-    child: Text(s),
-  );
+    child: Text(s));
 }
 
 Widget _page(String title, List<Widget> children) {
@@ -105,16 +109,22 @@ class AdvancedRiggingScreen extends StatelessWidget {
     return _page('Advanced Rigging', [
       tile(Icons.straighten, 'Sling Length & Angle',
           'Container / pipe: sling length, angle, size',
-          const SlingLengthScreen()),
+          const SlingLengthScreen(),
+      ),
       tile(Icons.precision_manufacturing, 'Crane Boom & Capacity',
-          'Boom length, angle, utilization %', const CraneBoomScreen()),
+          'Boom length, angle, utilization %', const CraneBoomScreen(),
+      ),
       tile(Icons.air, 'Wind Check', 'Wind force on load, go / no-go',
-          const WindCheckScreen()),
+          const WindCheckScreen(),
+      ),
       tile(Icons.compare_arrows, 'CG Load Share',
-          '2 point lift: load per point & sling', const CgShareScreen()),
+          '2 point lift: load per point & sling', const CgShareScreen(),
+      ),
       tile(Icons.terrain, 'Ground Bearing', 'Outrigger mat pressure',
-          const GroundBearingScreen()),
-      tile(Icons.handyman, 'Pro Tools', 'Crane chart, lift plan PDF, capacity, certificates', const ProToolsScreen()),
+          const GroundBearingScreen(),
+      ),
+      tile(Icons.handyman, 'Pro Tools', 'Crane chart, lift plan PDF, capacity, certificates', const ProToolsScreen(),
+      ),
       _note(_disclaimer),
     ]);
   }
@@ -129,7 +139,7 @@ class SlingLengthScreen extends StatefulWidget {
 
 class _SlingLengthScreenState extends State<SlingLengthScreen> {
   static const List<double> sizes = [
-    8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 44, 48, 52
+    8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 44, 48, 52,
   ];
   final load = TextEditingController();
   final len = TextEditingController(text: '12');
@@ -147,8 +157,9 @@ class _SlingLengthScreenState extends State<SlingLengthScreen> {
     final av = _n(avail);
     if (w <= 0 || a <= 0 || th <= 0 || th >= 90 || (legs == 4 && b <= 0)) {
       setState(() => out = [
-            const _R('Load, length aur angle sahi daalo (4 leg me width bhi)', 3)
-          ]);
+            const _R('Load, length aur angle sahi daalo (4 leg me width bhi)', 3),
+        ],
+      );
       return;
     }
     final run = legs == 4 ? math.sqrt(a * a + b * b) / 2 : a / 2;
@@ -176,32 +187,43 @@ class _SlingLengthScreenState extends State<SlingLengthScreen> {
       res.add(const _R('Angle 45-60: chalega, par 60 behtar hai', 2));
     } else {
       res.add(const _R(
-          'Angle 45 se kam: KHATRA. Sling lambi karo ya spreader beam lo', 3));
+          'Angle 45 se kam: KHATRA. Sling lambi karo ya spreader beam lo', 3,
+        ),
+      );
     }
     if (pick > 0) {
       res.add(_R(
           'Wire rope sling (6x36 IWRC) kam se kam ${_f(pick, 0)} mm (WLL approx ${_f(pick * pick / 100)} ton)',
-          1));
+          1,
+        ),
+      );
     } else {
       res.add(const _R(
-          '52 mm se bada chahiye: spreader beam ya engineer se poochho', 3));
+          '52 mm se bada chahiye: spreader beam ya engineer se poochho', 3,
+        ),
+      );
     }
     if (legs == 4) {
       res.add(const _R(
-          '4 leg me safe side ke liye sirf 2 leg carry maane hain', 2));
+          '4 leg me safe side ke liye sirf 2 leg carry maane hain', 2),
+      );
     }
     if (av > 0) {
       if (av <= run) {
         res.add(const _R(
             'Aapki sling bahut chhoti hai (leg length horizontal doori se badi honi chahiye)',
-            3));
+            3,
+          ),
+        );
       } else {
         final ta = math.acos(run / av);
         final tt = w / (2 * math.sin(ta));
         final lv = ta >= _rad(60) ? 1 : (ta >= _rad(45) ? 2 : 3);
         res.add(_R(
             'Aapki ${_f(av)} m sling se angle: ${_f(_deg(ta), 1)} deg, load per leg ${_f(tt)} ton',
-            lv));
+            lv,
+          ),
+        );
       }
     }
     setState(() => out = res);
@@ -233,14 +255,16 @@ class _SlingLengthScreenState extends State<SlingLengthScreen> {
                   label: Text('$n leg'),
                   selected: legs == n,
                   onSelected: (_) => setState(() => legs = n),
-                ))
+                ),
+            )
             .toList(),
       ),
       const SizedBox(height: 16),
       ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
-          'Container: 12 m x 2.44 m, 4 leg. Pipe: 2 leg, length = dono sling points ke beech doori. Wire rope size rule: WLL = d x d / 100 ton (estimate).'),
+          'Container: 12 m x 2.44 m, 4 leg. Pipe: 2 leg, length = dono sling points ke beech doori. Wire rope size rule: WLL = d x d / 100 ton (estimate).',
+      ),
       _note(_disclaimer),
     ]);
   }
@@ -276,7 +300,8 @@ class _CraneBoomScreenState extends State<CraneBoomScreen> {
     if (w <= 0 || r <= 0 || x <= 0 || y <= 0) {
       setState(() => out = [
             const _R('Load, radius aur heights sahi daalo', 3)
-          ]);
+          ],
+      );
       return;
     }
     final boom = math.sqrt(x * x + y * y);
@@ -291,7 +316,8 @@ class _CraneBoomScreenState extends State<CraneBoomScreen> {
       _R('Total hook load: ${_f(total)} ton (load + rigging + block)'),
     ];
     if (angle < 30) {
-      res.add(const _R('Boom angle kam hai: chart me allowed hai ya nahi dekho', 2));
+      res.add(const _R('Boom angle kam hai: chart me allowed hai ya nahi dekho', 2),
+      );
     }
     if (angle > 80) {
       res.add(const _R('Boom angle bahut zyada: peeche girne ka risk', 3));
@@ -300,12 +326,15 @@ class _CraneBoomScreenState extends State<CraneBoomScreen> {
       final u = total / cap * 100;
       final lv = u <= 75 ? 1 : (u <= 85 ? 2 : 3);
       res.add(_R(
-          'Chart capacity ${_f(cap)} ton par utilization: ${_f(u, 0)}%', lv));
+          'Chart capacity ${_f(cap)} ton par utilization: ${_f(u, 0)}%', lv),
+      );
       if (u > 100) {
         res.add(const _R('OVERLOAD: ye lift mat karo', 3));
       } else if (u > 85) {
         res.add(const _R(
-            '85% se upar: critical lift, engineer aur lift plan zaruri', 3));
+            '85% se upar: critical lift, engineer aur lift plan zaruri', 3,
+          ),
+        );
       } else if (u > 75) {
         res.add(const _R('75-85%: savdhani, critical lift check karo', 2));
       } else {
@@ -314,7 +343,9 @@ class _CraneBoomScreenState extends State<CraneBoomScreen> {
     } else {
       res.add(const _R(
           'Load chart se is radius aur boom length ki capacity daalke utilization check karo',
-          2));
+          2,
+        ),
+      );
     }
     setState(() => out = res);
   }
@@ -350,7 +381,8 @@ class _CraneBoomScreenState extends State<CraneBoomScreen> {
       ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
-          'Ye geometry se minimum boom length hai. Chart me agli available boom length lo aur wahi ki capacity daalo. Jib, boom bend aur outrigger setting shamil nahi.'),
+          'Ye geometry se minimum boom length hai. Chart me agli available boom length lo aur wahi ki capacity daalo. Jib, boom bend aur outrigger setting shamil nahi.',
+      ),
       _note(_disclaimer),
     ]);
   }
@@ -372,23 +404,18 @@ class _WindCheckScreenState extends State<WindCheckScreen> {
 
   void calc() {
     final kmh = _n(spd);
-    if (kmh <= 0) {
+    if (!kmh.isFinite || kmh < 0 || spd.text.trim().isEmpty) {
       setState(() => out = [const _R('Wind speed daalo', 3)]);
       return;
     }
     final v = kmh / 3.6;
     final res = <_R>[_R('Wind speed: ${_f(v, 1)} m/s')];
-    if (kmh <= 20) {
-      res.add(const _R('20 km/h tak: normal, lifting theek', 1));
-    } else if (kmh <= 32) {
-      res.add(const _R(
-          '20-32 km/h: savdhani, tag line lagao, badi surface wale load me risk',
-          2));
-    } else {
-      res.add(const _R(
-          '32 km/h se upar: lifting band karo (crane manual ka limit dekho)',
-          3));
-    }
+    res.add(
+      const _R(
+        'INCOMPLETE - approved manufacturer/project wind and gust limits are required. There is no universal crane wind limit.',
+        2,
+      ),
+    );
     final area = _n(ar);
     final w = _n(load);
     final cd = _n(cdc);
@@ -400,10 +427,13 @@ class _WindCheckScreenState extends State<WindCheckScreen> {
       res.add(_R('Load par wind force: ${_f(kgf, 0)} kgf'));
       res.add(_R('Load weight ka ${_f(pct, 1)}%'));
       res.add(_R('Load ka sway angle approx: ${_f(sway, 1)} deg',
-          pct > 10 ? 2 : 1));
+          pct > 10 ? 2 : 1),
+      );
       if (pct > 10) {
         res.add(const _R(
-            'Wind force zyada: load jhulega, radius badh sakta hai. Tag line zaruri', 2));
+            'Wind force zyada: load jhulega, radius badh sakta hai. Tag line zaruri', 2,
+          ),
+        );
       }
     } else {
       res.add(const _R(
@@ -431,7 +461,8 @@ class _WindCheckScreenState extends State<WindCheckScreen> {
       ElevatedButton(onPressed: calc, child: const Text('Check')),
       _results(out),
       _note(
-          'Force = 0.5 x 1.225 x v x v x Cd x Area. Gust isse zyada ho sakta hai, isliye margin rakho.'),
+          'Force = 0.5 x 1.225 x v x v x Cd x Area. Gust isse zyada ho sakta hai, isliye margin rakho.',
+      ),
       _note(_disclaimer),
     ]);
   }
@@ -465,12 +496,25 @@ class _CgShareScreenState extends State<CgShareScreen> {
     if (x <= 0 || x >= s) {
       setState(() => out = [
             const _R(
-                'CG dono lifting points ke beech me nahi hai: load palat sakta hai. Points badlo', 3)
-          ]);
+                'CG dono lifting points ke beech me nahi hai: load palat sakta hai. Points badlo', 3,
+          ),
+        ],
+      );
       return;
     }
-    final ra = w * (s - x) / s;
-    final rb = w * x / s;
+    CalculationResult share;
+    try {
+      share = CalculationEngine.twoPointShare(
+        loadKg: w * 1000,
+        spanM: s,
+        cgFromLeftM: x,
+      );
+    } on ArgumentError catch (e) {
+      setState(() => out = [_R(e.message.toString(), 3)]);
+      return;
+    }
+    final ra = share.values['leftKg']! / 1000;
+    final rb = share.values['rightKg']! / 1000;
     final aA = math.atan2(h, x);
     final aB = math.atan2(h, s - x);
     final tA = ra / math.sin(aA);
@@ -481,11 +525,17 @@ class _CgShareScreenState extends State<CgShareScreen> {
           _R('Point A par load: ${_f(ra)} ton'),
           _R('Point B par load: ${_f(rb)} ton'),
           _R('Sling A: ${_f(lA)} m, angle ${_f(_deg(aA), 1)} deg, tension ${_f(tA)} ton',
-              _lv(aA)),
-          _R('Sling B: ${_f(lB)} m, angle ${_f(_deg(aB), 1)} deg, tension ${_f(tB)} ton',
-              _lv(aB)),
-          _R('Hook / master link point A se ${_f(x)} m par, CG ke seedha upar rakho'),
-        ]);
+              _lv(aA),
+        ),
+        _R(
+          'Sling B: ${_f(lB)} m, angle ${_f(_deg(aB), 1)} deg, tension ${_f(tB)} ton',
+          _lv(aB),
+        ),
+        _R(
+          'Hook / master link point A se ${_f(x)} m par, CG ke seedha upar rakho',
+        ),
+      ],
+    );
   }
 
   @override
@@ -507,7 +557,8 @@ class _CgShareScreenState extends State<CgShareScreen> {
       ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
-          'CG jis point ke paas ho, us par zyada load aur us sling ki tension zyada. Dono sling ki tension ke hisaab se size lo.'),
+          'CG jis point ke paas ho, us par zyada load aur us sling ki tension zyada. Dono sling ki tension ke hisaab se size lo.',
+      ),
       _note(_disclaimer),
     ]);
   }
@@ -521,62 +572,150 @@ class GroundBearingScreen extends StatefulWidget {
 }
 
 class _GroundBearingScreenState extends State<GroundBearingScreen> {
-  final rxn = TextEditingController();
-  final ml = TextEditingController();
-  final mw = TextEditingController();
-  final sb = TextEditingController();
-  List<_R> out = [];
+  final rxn = TextEditingController(),
+      ml = TextEditingController(),
+      mw = TextEditingController(),
+      sb = TextEditingController();
+  final groundDocument = TextEditingController(),
+      revision = TextEditingController(),
+      approvedBy = TextEditingController(),
+      reactionSource = TextEditingController();
+  bool verified = false;
+  CalculationResult? result;
+  String error = '';
+  List<TextEditingController> get controllers => [
+    rxn,
+    ml,
+    mw,
+    sb,
+    groundDocument,
+    revision,
+    approvedBy,
+    reactionSource,
+  ];
+  @override
+  void initState() {
+    super.initState();
+    for (final c in controllers) {
+      c.addListener(invalidate);
+    }
+  }
 
-  void calc() {
-    final rx = _n(rxn);
-    final l = _n(ml);
-    final wd = _n(mw);
-    final q = _n(sb);
-    if (rx <= 0 || l <= 0 || wd <= 0) {
-      setState(() => out = [
-            const _R('Outrigger reaction aur mat size daalo', 3)
-          ]);
-      return;
-    }
-    final p = rx / (l * wd);
-    final res = <_R>[
-      _R('Mat par pressure: ${_f(p)} ton/m2 (${_f(p * 9.81, 1)} kPa)'),
-    ];
-    if (q > 0) {
-      final ratio = p / q * 100;
-      res.add(_R('Soil capacity ka ${_f(ratio, 0)}% use ho raha hai',
-          ratio <= 100 ? 1 : 3));
-      res.add(_R('Kam se kam mat area chahiye: ${_f(rx / q)} m2'));
-      if (ratio > 100) {
-        res.add(const _R('Mat chhota hai: bada mat ya cribbing lagao', 3));
-      }
-    } else {
-      res.add(const _R(
-          'Soil allowable bearing daalo (soil report / site engineer se)', 2));
-    }
-    setState(() => out = res);
+  void invalidate() {
+    setState(() {
+      result = null;
+      verified = false;
+      error = '';
+    });
   }
 
   @override
   void dispose() {
-    rxn.dispose();
-    ml.dispose();
-    mw.dispose();
-    sb.dispose();
+    for (final c in controllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
+  void calc() {
+    try {
+      final hasGroundSource = [
+        groundDocument,
+        revision,
+        approvedBy,
+      ].every((c) => c.text.trim().isNotEmpty);
+      final r = CalculationEngine.ground(
+        reactionN: _n(rxn) * 1000 * CalculationEngine.gravity,
+        lengthM: _n(ml),
+        widthM: _n(mw),
+        allowablePa: sb.text.trim().isEmpty
+            ? null
+            : _n(sb) * 1000 * CalculationEngine.gravity,
+        groundSource: hasGroundSource
+            ? '${groundDocument.text}, rev ${revision.text}, approved by ${approvedBy.text}'
+            : '',
+        reactionSource: reactionSource.text,
+        sourcesVerified: verified,
+      );
+      setState(() {
+        result = r;
+        error = '';
+      });
+    } on ArgumentError catch (e) {
+      setState(() {
+        result = null;
+        error = e.message.toString();
+      });
+    }
+  }
+
+  Widget text(TextEditingController c, String label) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: TextField(
+      controller: c,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+    ),
+  );
   @override
   Widget build(BuildContext context) {
+    final r = result;
     return _page('Ground Bearing', [
-      _field(rxn, 'Outrigger reaction (crane manual / chart se)', suffix: 'ton'),
-      _field(ml, 'Mat length', suffix: 'm'),
-      _field(mw, 'Mat width', suffix: 'm'),
-      _field(sb, 'Soil allowable bearing (soil report se)', suffix: 'ton/m2'),
+      _field(
+        rxn,
+        'Maximum outrigger reaction from verified source',
+        suffix: 'tonne-force',
+      ),
+      _field(ml, 'Effective bearing length', suffix: 'm'),
+      _field(mw, 'Effective bearing width', suffix: 'm'),
+      _field(
+        sb,
+        'Allowable ground pressure from approved report',
+        suffix: 'tonne-force/m2',
+      ),
+      text(groundDocument, 'Ground report / project document'),
+      text(revision, 'Ground document revision'),
+      text(approvedBy, 'Ground value approved by'),
+      text(reactionSource, 'Reaction source, configuration & revision'),
+      CheckboxListTile(
+        contentPadding: EdgeInsets.zero,
+        value: verified,
+        title: const Text(
+          'Ground value and maximum reaction verified against the documents',
+        ),
+        onChanged: (v) => setState(() {
+          verified = v ?? false;
+          result = null;
+        }),
+      ),
       ElevatedButton(onPressed: calc, child: const Text('Calculate')),
-      _results(out),
+      if (error.isNotEmpty) _results([_R(error, 3)]),
+      if (r != null)
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Pressure: ${_f(r.values['pressurePa']! / 1000)} kPa'),
+                Text('Provided area: ${_f(r.values['providedAreaM2']!)} m2'),
+                if (r.values.containsKey('requiredAreaM2'))
+                  Text(
+                    'Required bearing area: ${_f(r.values['requiredAreaM2']!)} m2',
+                  ),
+                if (r.values.containsKey('utilizationPercent'))
+                  Text('Utilization: ${_f(r.values['utilizationPercent']!)}%'),
+                const SizedBox(height: 12),
+                CalculationDetails(result: r),
+              ],
+            ),
+          ),
+        ),
       _note(
-          'Outrigger par max load usually crane ke weight aur load dono se aata hai. Exact value crane manual me dekho.'),
+        'Bearing-area check only. Mat thickness, bending strength and load spreading require engineering verification.',
+      ),
       _note(_disclaimer),
     ]);
   }

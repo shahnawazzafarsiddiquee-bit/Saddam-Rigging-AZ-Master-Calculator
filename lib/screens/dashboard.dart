@@ -142,7 +142,7 @@ const List<String> _tips = [
   'Sling angle 45 deg se kam mat rakho.',
   'Lift se pehle hook latch aur sling tag check karo.',
   'Load ke neeche kabhi khade mat ho.',
-  'Wind 32 km/h se upar ho to lifting band.',
+  'Wind aur gust limits crane manual / approved project procedure se verify karo.',
   'Tag line lagao, load ko haath se mat pakdo.',
   'Crane ki load chart hamesha cab me rakho.',
   'Overhead line se safe doori rakho.',

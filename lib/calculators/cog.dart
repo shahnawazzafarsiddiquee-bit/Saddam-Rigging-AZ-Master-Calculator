@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../app/theme.dart';
+import '../services/calculation_engine.dart';
 
 /// 7. CENTER OF GRAVITY (COG) CALCULATOR
 /// Computes the combined COG of up to 4 point loads on a 2D plan (x, y in metres from a datum),
@@ -15,6 +17,13 @@ class _PointLoad {
   final TextEditingController weight = TextEditingController();
   final TextEditingController x = TextEditingController();
   final TextEditingController y = TextEditingController();
+  final TextEditingController z = TextEditingController(text: '0');
+  void dispose() {
+    weight.dispose();
+    x.dispose();
+    y.dispose();
+    z.dispose();
+  }
 }
 
 class _CogCalculatorState extends State<CogCalculator> {
@@ -22,6 +31,7 @@ class _CogCalculatorState extends State<CogCalculator> {
 
   double? _cogX;
   double? _cogY;
+  double? _cogZ;
   double? _totalWeight;
 
   void _addPoint() {
@@ -29,40 +39,48 @@ class _CogCalculatorState extends State<CogCalculator> {
   }
 
   void _removePoint(int i) {
-    if (_points.length > 2) setState(() => _points.removeAt(i));
+    if (_points.length > 2) setState(() {
+        _points.removeAt(i).dispose();
+        _cogX = null;
+      });
+  }
+
+  @override
+  void dispose() {
+    for (final point in _points) {
+      point.dispose();
+    }
+    super.dispose();
   }
 
   void _calculate() {
-    double totalWeight = 0;
-    double sumWx = 0;
-    double sumWy = 0;
-    bool valid = true;
-
-    for (final p in _points) {
-      final w = double.tryParse(p.weight.text);
-      final x = double.tryParse(p.x.text);
-      final y = double.tryParse(p.y.text);
-      if (w == null || x == null || y == null) {
-        valid = false;
-        break;
+    try {
+      final points = <MassPoint>[];
+      for (final p in _points) {
+        final values = [
+          p.weight,
+          p.x,
+          p.y,
+          p.z,
+        ].map((c) => double.tryParse(c.text)).toList();
+        if (values.any((v) => v == null))
+          throw ArgumentError('Fill weight and X/Y/Z for every point.');
+        points.add(
+          MassPoint(values[0]! * 1000, values[1]!, values[2]!, values[3]!),
+        );
       }
-      totalWeight += w;
-      sumWx += w * x;
-      sumWy += w * y;
+      final result = CalculationEngine.centerOfMass(points);
+      setState(() {
+        _totalWeight = result.values['massKg']! / 1000;
+        _cogX = result.values['xM'];
+        _cogY = result.values['yM'];
+        _cogZ = result.values['zM'];
+      });
+    } on ArgumentError catch (e) {
+      setState(() => _cogX = null);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message.toString())));
     }
-
-    if (!valid || totalWeight <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fill in weight, X and Y for every point load.')),
-      );
-      return;
-    }
-
-    setState(() {
-      _totalWeight = totalWeight;
-      _cogX = sumWx / totalWeight;
-      _cogY = sumWy / totalWeight;
-    });
   }
 
   @override
@@ -75,7 +93,7 @@ class _CogCalculatorState extends State<CogCalculator> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Enter each significant weight component with its X/Y position (m) measured from a common datum point (e.g. one corner of the load).',
+              'Enter each significant weight component with its X/Y/Z position (m) measured from a common datum point (e.g. one corner of the load).',
               style: TextStyle(color: Colors.white70),
             ),
             const SizedBox(height: 12),
@@ -86,7 +104,8 @@ class _CogCalculatorState extends State<CogCalculator> {
               label: const Text('ADD WEIGHT POINT'),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE')),
+            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE'),
+            ),
             if (_cogX != null) ...[
               const SizedBox(height: 24),
               Card(
@@ -95,9 +114,20 @@ class _CogCalculatorState extends State<CogCalculator> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ResultRow(label: 'Total Weight', value: '${_totalWeight!.toStringAsFixed(2)} t'),
-                      ResultRow(label: 'COG — X from datum', value: '${_cogX!.toStringAsFixed(3)} m'),
-                      ResultRow(label: 'COG — Y from datum', value: '${_cogY!.toStringAsFixed(3)} m'),
+                      ResultRow(label: 'Total Weight', value: '${_totalWeight!.toStringAsFixed(2)} t',
+                      ),
+                      ResultRow(
+                        label: 'COG — X from datum',
+                        value: '${_cogX!.toStringAsFixed(3)} m',
+                      ),
+                      ResultRow(
+                        label: 'COG — Y from datum',
+                        value: '${_cogY!.toStringAsFixed(3)} m',
+                      ),
+                      ResultRow(
+                        label: 'COG — Z from datum',
+                        value: '${_cogZ!.toStringAsFixed(3)} m',
+                      ),
                       const SizedBox(height: 8),
                       const Text(
                         'Recommendation: position lifting points symmetrically about the calculated COG and verify by trial-lift a few centimetres off the ground.',
@@ -123,11 +153,13 @@ class _CogCalculatorState extends State<CogCalculator> {
           children: [
             Row(
               children: [
-                Text('Point ${i + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text('Point ${i + 1}', style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const Spacer(),
                 if (_points.length > 2)
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent,
+                    ),
                     onPressed: () => _removePoint(i),
                   ),
               ],
@@ -137,7 +169,8 @@ class _CogCalculatorState extends State<CogCalculator> {
                 Expanded(
                   child: TextField(
                     controller: p.weight,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true,
+                    ),
                     decoration: const InputDecoration(labelText: 'Weight (t)'),
                   ),
                 ),
@@ -145,7 +178,8 @@ class _CogCalculatorState extends State<CogCalculator> {
                 Expanded(
                   child: TextField(
                     controller: p.x,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true,
+                    ),
                     decoration: const InputDecoration(labelText: 'X (m)'),
                   ),
                 ),
@@ -153,11 +187,21 @@ class _CogCalculatorState extends State<CogCalculator> {
                 Expanded(
                   child: TextField(
                     controller: p.y,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true,
+                    ),
                     decoration: const InputDecoration(labelText: 'Y (m)'),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: p.z,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+                signed: true,
+              ),
+              decoration: const InputDecoration(labelText: 'Z (m, same datum)'),
             ),
           ],
         ),

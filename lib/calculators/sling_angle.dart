@@ -1,9 +1,9 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-import '../app/theme.dart';
 
-/// 1. SLING ANGLE CALCULATOR
-/// Leg Load = Load / (Number of Legs x sin(angle))
+import '../app/theme.dart';
+import '../services/calculation_engine.dart';
+import '../app/calculation_details.dart';
+
 class SlingAngleCalculator extends StatefulWidget {
   const SlingAngleCalculator({super.key});
 
@@ -16,43 +16,104 @@ class _SlingAngleCalculatorState extends State<SlingAngleCalculator> {
   final _legsCtrl = TextEditingController(text: '2');
   final _angleCtrl = TextEditingController(text: '60');
   final _sfCtrl = TextEditingController(text: '5');
+  final _wllCtrl = TextEditingController();
+  final _sourceCtrl = TextEditingController();
+  AngleConvention _convention = AngleConvention.horizontal;
+  bool _ratingVerified = false;
+  CalculationResult? _result;
+  double? _breakingKg;
 
-  double? _legLoad;
-  double? _slingTension;
-  double? _requiredWll;
-  double? _requiredBreakingStrength;
-  bool? _safe;
-
-  void _calculate() {
-    final load = double.tryParse(_loadCtrl.text);
-    final legs = int.tryParse(_legsCtrl.text);
-    final angleDeg = double.tryParse(_angleCtrl.text);
-    final sf = double.tryParse(_sfCtrl.text) ?? 5;
-
-    if (load == null || legs == null || legs <= 0 || angleDeg == null || angleDeg <= 0 || angleDeg > 90) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter valid load, legs and angle (0-90 deg).')),
-      );
-      return;
+  List<TextEditingController> get _controllers => [
+    _loadCtrl,
+    _legsCtrl,
+    _angleCtrl,
+    _sfCtrl,
+    _wllCtrl,
+    _sourceCtrl,
+  ];
+  @override
+  void initState() {
+    super.initState();
+    for (final c in _controllers) {
+      c.addListener(_invalidate);
     }
+    _wllCtrl.addListener(_invalidateRating);
+    _sourceCtrl.addListener(_invalidateRating);
+  }
 
-    final angleRad = angleDeg * pi / 180;
-    final legLoad = load / (legs * sin(angleRad));
-    final requiredWll = legLoad; // the sling's WLL must be at or above the leg load
-    final requiredBreakingStrength = legLoad * sf; // MBL the sling must be rated for at this SF
-    final safe = angleDeg >= 30; // industry rule of thumb: avoid slings below 30 deg
+  void _invalidate() {
+    if (_result != null) setState(() => _result = null);
+  }
 
-    setState(() {
-      _legLoad = legLoad;
-      _slingTension = legLoad;
-      _requiredWll = requiredWll;
-      _requiredBreakingStrength = requiredBreakingStrength;
-      _safe = safe;
-    });
+  void _invalidateRating() {
+    if (_ratingVerified) setState(() => _ratingVerified = false);
   }
 
   @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _calculate() {
+    try {
+    final load = double.tryParse(_loadCtrl.text);
+    final legs = int.tryParse(_legsCtrl.text);
+    final angle = double.tryParse(_angleCtrl.text);
+    final sf = double.tryParse(_sfCtrl.text);
+
+    if (load == null || legs == null || angle == null || sf == null)
+        throw ArgumentError(
+          'Enter load, effective legs, angle and design factor.',
+        );
+      CalculationEngine.finite(sf, 'Design factor', positive: true);
+      final rawWll = _wllCtrl.text.trim();
+      final wll = rawWll.isEmpty ? null : double.tryParse(rawWll);
+      if (rawWll.isNotEmpty && wll == null)
+        throw ArgumentError('Enter a valid selected configuration WLL.');
+      final result = CalculationEngine.sling(
+        loadKg: load * 1000,
+        effectiveLegs: legs,
+        angleDegrees: angle,
+        convention: _convention,
+        selectedWllKg: wll == null ? null : wll * 1000,
+        ratingSource: _sourceCtrl.text,
+        ratingVerified: _ratingVerified,
+      );
+      final breaking = result.values['requiredWllKg']! * sf;
+      CalculationEngine.finite(
+        breaking,
+        'Required breaking strength',
+        positive: true,
+      );
+      setState(() {
+        _result = result;
+        _breakingKg = breaking;
+      });
+    } on ArgumentError catch (e) {
+      setState(() => _result = null);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message.toString())));
+    }
+  }
+
+  Widget _field(TextEditingController c, String label, {bool numeric = true}) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: TextField(
+          controller: c,
+          keyboardType: numeric
+              ? const TextInputType.numberWithOptions(decimal: true)
+              : TextInputType.text,
+          decoration: InputDecoration(labelText: label),
+        ),
+      );
+
+  @override
   Widget build(BuildContext context) {
+    final result = _result;
     return Scaffold(
       appBar: AppBar(title: const Text('Sling Angle Calculator')),
       body: SingleChildScrollView(
@@ -60,32 +121,53 @@ class _SlingAngleCalculatorState extends State<SlingAngleCalculator> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              controller: _loadCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Load Weight (t)'),
+            _field(_loadCtrl, 'Load Weight (t)'),
+            _field(_legsCtrl, 'Effective Supporting Legs (1-4)'),
+            const Text(
+              'Confirm effective load sharing for the actual arrangement; installed legs may not share equally.',
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _legsCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Number of Sling Legs'),
+            SegmentedButton<AngleConvention>(
+              segments: const [
+                ButtonSegment(
+                  value: AngleConvention.horizontal,
+                  label: Text('From horizontal'),
+                ),
+                ButtonSegment(
+                  value: AngleConvention.vertical,
+                  label: Text('From vertical'),
+                ),
+              ],
+              selected: {_convention},
+              onSelectionChanged: (s) => setState(() {
+                _convention = s.first;
+                _result = null;
+              }),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _angleCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Sling Angle from Horizontal (deg)'),
+            _field(_angleCtrl, 'Sling Angle (${_convention.name}, deg)'),
+            _field(_sfCtrl, 'Design Factor (verify source)'),
+            _field(_wllCtrl, 'Selected Configuration WLL per Leg (t)'),
+            _field(
+              _sourceCtrl,
+              'Tag / certificate / derating source & revision',
+              numeric: false,
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _ratingVerified,
+              title: const Text(
+                'Configuration WLL verified against tag, certificate and manufacturer data',
+              ),
+              onChanged: (v) => setState(() {
+                _ratingVerified = v ?? false;
+                _result = null;
+              }),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _sfCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Safety Factor'),
+            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE'),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE')),
-            if (_legLoad != null) ...[
+            if (result != null) ...[
               const SizedBox(height: 24),
               Card(
                 child: Padding(
@@ -93,20 +175,32 @@ class _SlingAngleCalculatorState extends State<SlingAngleCalculator> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ResultRow(label: 'Load per Leg', value: '${_legLoad!.toStringAsFixed(2)} t'),
-                      ResultRow(label: 'Sling Tension', value: '${_slingTension!.toStringAsFixed(2)} t'),
-                      ResultRow(label: 'Required Sling WLL', value: '${_requiredWll!.toStringAsFixed(2)} t'),
-                      ResultRow(label: 'Required Breaking Strength (with SF)', value: '${_requiredBreakingStrength!.toStringAsFixed(2)} t'),
-                      const SizedBox(height: 12),
-                      SafetyStatusBanner(isSafe: _safe ?? false),
-                      if (!(_safe ?? true))
-                        const Padding(
-                          padding: EdgeInsets.only(top: 8),
-                          child: Text(
-                            'Angle below 30° dramatically increases sling tension. Use longer slings or a spreader beam.',
-                            style: TextStyle(color: Colors.orangeAccent),
-                          ),
+                      ResultRow(label: 'Vertical Load per Leg',
+                        value:
+                            '${(result.values['verticalLoadPerLegN']! / CalculationEngine.gravity / 1000).toStringAsFixed(3)} t',
+                      ),
+                      ResultRow(
+                        label: 'Sling Tension',
+                        value:
+                            '${(result.values['tensionN']! / CalculationEngine.gravity / 1000).toStringAsFixed(3)} t',
+                      ),
+                      ResultRow(
+                        label: 'Required Configuration WLL',
+                        value:
+                            '${(result.values['requiredWllKg']! / 1000).toStringAsFixed(3)} t',
+                      ),
+                      ResultRow(
+                        label: 'Required Breaking Strength (with factor)',
+                        value: '${(_breakingKg! / 1000).toStringAsFixed(3)} t',
+                      ),
+                      if (result.values.containsKey('utilizationPercent'))
+                        ResultRow(
+                          label: 'Utilization',
+                          value:
+                              '${result.values['utilizationPercent']!.toStringAsFixed(1)}%',
                         ),
+                      const SizedBox(height: 12),
+                      CalculationDetails(result: result),
                     ],
                   ),
                 ),

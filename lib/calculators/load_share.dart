@@ -1,4 +1,4 @@
-import 'dart:math';
+import '../services/calculation_engine.dart';
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
 
@@ -18,39 +18,39 @@ class _LoadShareCalculatorState extends State<LoadShareCalculator> {
 
   List<double>? _legLoads;
   double? _angleFactor;
-  bool? _safe;
 
   void _calculate() {
     final load = double.tryParse(_loadCtrl.text);
     final angleDeg = double.tryParse(_angleCtrl.text);
     final sf = double.tryParse(_sfCtrl.text) ?? 5;
 
-    if (load == null || angleDeg == null || angleDeg <= 0 || angleDeg > 90) {
+    if (load == null ||
+        !load.isFinite ||
+        load <= 0 ||
+        angleDeg == null ||
+        !angleDeg.isFinite ||
+        angleDeg <= 0 ||
+        angleDeg > 90 ||
+        !sf.isFinite ||
+        sf <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid load and angle (0-90 deg).')),
+        const SnackBar(content: Text('Enter a valid load and angle (0-90 deg).'),
+        ),
       );
       return;
     }
 
-    final angleRad = angleDeg * pi / 180;
-    final angleFactor = 1 / sin(angleRad);
-
-    // For 3 & 4 leg slings, industry practice conservatively assumes only
-    // 2 legs share the full load evenly (uneven rigging / rigid load risk),
-    // while 2-leg slings share the load across both legs.
-    List<double> legLoads;
-    if (_legs == 2) {
-      legLoads = List.filled(2, (load / 2) * angleFactor);
-    } else if (_legs == 3) {
-      legLoads = List.filled(3, (load / 2) * angleFactor);
-    } else {
-      legLoads = List.filled(4, (load / 2) * angleFactor);
-    }
+    final result = CalculationEngine.sling(
+      loadKg: load * 1000,
+      effectiveLegs: 2,
+      angleDegrees: angleDeg,
+    );
+    final angleFactor = result.values['angleFactor']!;
+    final legLoads = List.filled(_legs, result.values['requiredWllKg']! / 1000);
 
     setState(() {
       _legLoads = legLoads;
       _angleFactor = angleFactor;
-      _safe = angleDeg >= 30;
     });
   }
 
@@ -65,7 +65,8 @@ class _LoadShareCalculatorState extends State<LoadShareCalculator> {
           children: [
             TextField(
               controller: _loadCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
               decoration: const InputDecoration(labelText: 'Total Load (t)'),
             ),
             const SizedBox(height: 12),
@@ -83,17 +84,22 @@ class _LoadShareCalculatorState extends State<LoadShareCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _angleCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Sling Angle from Horizontal (deg)'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Sling Angle from Horizontal (deg)',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _sfCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
               decoration: const InputDecoration(labelText: 'Safety Factor'),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE')),
+            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE'),
+            ),
             if (_legLoads != null) ...[
               const SizedBox(height: 24),
               Card(
@@ -102,11 +108,18 @@ class _LoadShareCalculatorState extends State<LoadShareCalculator> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ResultRow(label: 'Angle Correction Factor', value: _angleFactor!.toStringAsFixed(3)),
+                      ResultRow(label: 'Angle Correction Factor', value: _angleFactor!.toStringAsFixed(3),
+                      ),
                       for (int i = 0; i < _legLoads!.length; i++)
-                        ResultRow(label: 'Leg ${i + 1} Load', value: '${_legLoads![i].toStringAsFixed(2)} t'),
+                        ResultRow(label: 'Leg ${i + 1} Load', value: '${_legLoads![i].toStringAsFixed(2)} t',
+                        ),
                       const SizedBox(height: 12),
-                      SafetyStatusBanner(isSafe: _safe ?? false),
+                      SafetyStatusBanner(isSafe: false,
+                        unsafeText: 'INCOMPLETE',
+                      ),
+                      const Text(
+                        'Preliminary envelope using two effective supporting legs. This does not establish the actual load on every installed leg. Verify CG, geometry and configuration WLL.',
+                      ),
                     ],
                   ),
                 ),

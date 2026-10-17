@@ -22,9 +22,15 @@ class _DdRatioCalculatorState extends State<DdRatioCalculator> {
   void _calculate() {
     final sheave = double.tryParse(_sheaveCtrl.text);
     final rope = double.tryParse(_ropeCtrl.text);
-    final minRatio = double.tryParse(_minRatioCtrl.text) ?? 18;
+    final minRatio = _minRatioCtrl.text.trim().isEmpty
+        ? 18.0
+        : double.tryParse(_minRatioCtrl.text) ?? double.nan;
 
-    if (sheave == null || rope == null || rope <= 0 || sheave <= 0) {
+    if (sheave == null || rope == null ||
+        !sheave.isFinite ||
+        !rope.isFinite ||
+        !minRatio.isFinite ||
+        minRatio <= 0 || rope <= 0 || sheave <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter valid sheave and rope diameters.')),
       );
@@ -49,23 +55,33 @@ class _DdRatioCalculatorState extends State<DdRatioCalculator> {
           children: [
             TextField(
               controller: _sheaveCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Sheave / Drum Diameter (mm)'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Sheave / Drum Diameter (mm)',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _ropeCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Rope Diameter (mm)'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Rope Diameter (mm)',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _minRatioCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Minimum Required D/d (default 18:1)'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Minimum Required D/d (default 18:1)',
+              ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE')),
+            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE'),
+            ),
             if (_ratio != null) ...[
               const SizedBox(height: 24),
               Card(
@@ -74,7 +90,8 @@ class _DdRatioCalculatorState extends State<DdRatioCalculator> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ResultRow(label: 'D/d Ratio', value: '${_ratio!.toStringAsFixed(2)} : 1'),
+                      ResultRow(label: 'D/d Ratio', value: '${_ratio!.toStringAsFixed(2)} : 1',
+                      ),
                       const SizedBox(height: 12),
                       SafetyStatusBanner(isSafe: _safe ?? false),
                       if (!(_safe ?? true))

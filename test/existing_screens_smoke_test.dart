@@ -24,39 +24,56 @@ void main() {
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(sqliteChannel, (call) async {
-      switch (call.method) {
-        case 'getDatabasesPath': return '/tmp/rigsafe_widget_databases';
-        case 'openDatabase': return {'id': ++nextDatabaseId};
-        case 'query':
-          final sql = (call.arguments as Map)['sql'] as String;
-          if (sql.toLowerCase().contains('pragma user_version')) {
-            return [{'user_version': 1}];
+          switch (call.method) {
+            case 'getDatabasesPath':
+              return '/tmp/rigsafe_widget_databases';
+            case 'openDatabase':
+              return {'id': ++nextDatabaseId};
+            case 'query':
+              final sql = (call.arguments as Map)['sql'] as String;
+              if (sql.toLowerCase().contains('pragma user_version')) {
+                return [
+                  {'user_version': 1},
+                ];
+              }
+              return <Map<String, Object?>>[];
+            case 'batch':
+              return <Object?>[];
+            case 'insert':
+              return 1;
+            case 'update':
+              return 0;
+            default:
+              return null;
           }
-          return <Map<String, Object?>>[];
-        case 'batch': return <Object?>[];
-        case 'insert': return 1;
-        case 'update': return 0;
-        default: return null;
-      }
-    });
+        });
   });
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(sqliteChannel, null);
   });
 
-  test('original theme palette, backgrounds and button colours are preserved', () {
-    final theme = AppTheme.darkTheme;
-    expect(AppColors.navy, const Color(0xFF15335C));
-    expect(AppColors.safetyOrange, const Color(0xFFFF6F00));
-    expect(theme.scaffoldBackgroundColor, const Color(0xFF1E1E1E));
-    expect(theme.cardTheme.color, const Color(0xFF2A2E33));
-    expect(theme.colorScheme.primary, AppColors.safetyOrange);
-    expect(theme.colorScheme.secondary, AppColors.safetyOrange);
-    expect(theme.appBarTheme.backgroundColor, AppColors.navy);
-    expect(theme.elevatedButtonTheme.style!.backgroundColor!.resolve({}), AppColors.safetyOrange);
-    expect(theme.filledButtonTheme.style!.backgroundColor!.resolve({}), AppColors.safetyOrange);
-  });
+  test(
+    'original theme palette, backgrounds and button colours are preserved',
+    () {
+      final theme = AppTheme.darkTheme;
+      expect(AppColors.navy, const Color(0xFF15335C));
+      expect(AppColors.safetyOrange, const Color(0xFFFF6F00));
+      expect(theme.scaffoldBackgroundColor, const Color(0xFF1E1E1E));
+      expect(theme.cardTheme.color, const Color(0xFF2A2E33));
+      expect(theme.colorScheme.primary, AppColors.safetyOrange);
+      expect(theme.colorScheme.secondary, AppColors.safetyOrange);
+      expect(theme.appBarTheme.backgroundColor, AppColors.navy);
+      expect(
+        theme.elevatedButtonTheme.style!.backgroundColor!.resolve({}),
+        AppColors.safetyOrange,
+      );
+      expect(
+        theme.filledButtonTheme.style!.backgroundColor!.resolve({}),
+        AppColors.safetyOrange,
+      );
+    },
+  );
 
   final standalone = <String, Widget>{
     'advanced rigging': const AdvancedRiggingScreen(),
@@ -99,11 +116,13 @@ void main() {
   };
 
   Future<void> render(WidgetTester tester, Widget screen) async {
-    tester.view.physicalSize = const Size(432,960);
+    tester.view.physicalSize = const Size(432, 960);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(MaterialApp(theme: AppTheme.darkTheme, home: screen));
+    await tester.pumpWidget(
+      MaterialApp(theme: AppTheme.darkTheme, home: screen),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(Scaffold), findsWidgets);
@@ -114,7 +133,9 @@ void main() {
   }
 
   for (final entry in AppRoutes.routes.entries) {
-    testWidgets('existing registered route renders: ${entry.key}', (tester) async {
+    testWidgets('existing registered route renders: ${entry.key}', (
+      tester,
+    ) async {
       await render(tester, Builder(builder: entry.value));
     });
   }

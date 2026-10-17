@@ -33,6 +33,7 @@ class _WllCalculatorState extends State<WllCalculator> {
   }
 
   void _calculate() {
+    setState(() => _wll = null);
     final breakingLoad = double.tryParse(_breakingLoadCtrl.text);
     final sf = _sfCtrl.text.trim().isEmpty
         ? _defaultSf(_type)
@@ -43,7 +44,7 @@ class _WllCalculatorState extends State<WllCalculator> {
         !breakingLoad.isFinite ||
         breakingLoad <= 0 ||
         !sf.isFinite ||
-        sf <= 0 ||
+        sf < 1 ||
         (_appliedLoadCtrl.text.trim().isNotEmpty &&
             (appliedLoad == null ||
                 !appliedLoad.isFinite ||
@@ -95,6 +96,7 @@ class _WllCalculatorState extends State<WllCalculator> {
             const SizedBox(height: 16),
             TextField(
               controller: _breakingLoadCtrl,
+              onChanged: (_) => setState(() => _wll = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -104,6 +106,7 @@ class _WllCalculatorState extends State<WllCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _sfCtrl,
+              onChanged: (_) => setState(() => _wll = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: InputDecoration(
@@ -113,6 +116,7 @@ class _WllCalculatorState extends State<WllCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _appliedLoadCtrl,
+              onChanged: (_) => setState(() => _wll = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(

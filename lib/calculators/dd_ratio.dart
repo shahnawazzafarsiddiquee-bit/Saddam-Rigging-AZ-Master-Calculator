@@ -20,6 +20,7 @@ class _DdRatioCalculatorState extends State<DdRatioCalculator> {
   bool? _safe;
 
   void _calculate() {
+    setState(() => _ratio = null);
     final sheave = double.tryParse(_sheaveCtrl.text);
     final rope = double.tryParse(_ropeCtrl.text);
     final minRatio = _minRatioCtrl.text.trim().isEmpty
@@ -38,6 +39,9 @@ class _DdRatioCalculatorState extends State<DdRatioCalculator> {
     }
 
     final ratio = sheave / rope;
+    if (!ratio.isFinite) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Result is outside the supported numeric range.')));return;
+    }
     setState(() {
       _ratio = ratio;
       _safe = ratio >= minRatio;
@@ -55,6 +59,7 @@ class _DdRatioCalculatorState extends State<DdRatioCalculator> {
           children: [
             TextField(
               controller: _sheaveCtrl,
+              onChanged: (_) => setState(() => _ratio = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -64,6 +69,7 @@ class _DdRatioCalculatorState extends State<DdRatioCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _ropeCtrl,
+              onChanged: (_) => setState(() => _ratio = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -73,6 +79,7 @@ class _DdRatioCalculatorState extends State<DdRatioCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _minRatioCtrl,
+              onChanged: (_) => setState(() => _ratio = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(

@@ -28,6 +28,7 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
   bool? _safe;
 
   void _calculate() {
+    setState(() => _bearingStressMpa = null);
     final loadT = double.tryParse(_loadCtrl.text); // tonnes
     final thickness = double.tryParse(_thicknessCtrl.text); // mm
     final holeDia = double.tryParse(_holeDiaCtrl.text); // mm
@@ -49,7 +50,7 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
         !yieldMpa.isFinite ||
         !sf.isFinite ||
         yieldMpa <= 0 ||
-        sf <= 0) {
+        sf < 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Fill in all padeye fields with valid numbers.'),
         ),
@@ -71,6 +72,9 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
 
     final allowable = yieldMpa / sf;
     final worstStress = max(bearingStress, tensileStress);
+    if (![bearingStress,tensileStress,allowable].every((v)=>v.isFinite)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Result is outside the supported numeric range.')));return;
+    }
     final safe = worstStress <= allowable;
 
     setState(() {
@@ -92,6 +96,7 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
           children: [
             TextField(
               controller: _loadCtrl,
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -101,6 +106,7 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _thicknessCtrl,
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -110,6 +116,7 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _holeDiaCtrl,
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -119,6 +126,7 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _plateWidthCtrl,
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -128,6 +136,7 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _yieldCtrl,
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -137,6 +146,7 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _sfCtrl,
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(

@@ -37,6 +37,7 @@ class _WireRopeCalculatorState extends State<WireRopeCalculator> {
   bool? _safe;
 
   void _calculate() {
+    setState(() => _breakingStrength = null);
     final d = double.tryParse(_diameterCtrl.text);
     final sf = _sfCtrl.text.trim().isEmpty
         ? 5.0
@@ -47,7 +48,7 @@ class _WireRopeCalculatorState extends State<WireRopeCalculator> {
         !d.isFinite ||
         d <= 0 ||
         !sf.isFinite ||
-        sf <= 0 ||
+        sf < 1 ||
         (_appliedLoadCtrl.text.trim().isNotEmpty &&
             (appliedLoad == null ||
                 !appliedLoad.isFinite ||
@@ -59,6 +60,9 @@ class _WireRopeCalculatorState extends State<WireRopeCalculator> {
     }
 
     final breaking = _construction.k * pow(d, 2);
+    if (!breaking.isFinite) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Result is outside the supported numeric range.')));return;
+    }
     final wll = breaking / sf;
     final safe = appliedLoad == null ? null : appliedLoad <= wll;
 
@@ -80,6 +84,7 @@ class _WireRopeCalculatorState extends State<WireRopeCalculator> {
           children: [
             TextField(
               controller: _diameterCtrl,
+              onChanged: (_) => setState(() => _breakingStrength = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -103,6 +108,7 @@ class _WireRopeCalculatorState extends State<WireRopeCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _sfCtrl,
+              onChanged: (_) => setState(() => _breakingStrength = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -112,6 +118,7 @@ class _WireRopeCalculatorState extends State<WireRopeCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _appliedLoadCtrl,
+              onChanged: (_) => setState(() => _breakingStrength = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(

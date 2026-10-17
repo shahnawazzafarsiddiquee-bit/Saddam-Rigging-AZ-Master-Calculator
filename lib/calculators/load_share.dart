@@ -20,6 +20,7 @@ class _LoadShareCalculatorState extends State<LoadShareCalculator> {
   double? _angleFactor;
 
   void _calculate() {
+    setState(() => _legLoads = null);
     final load = double.tryParse(_loadCtrl.text);
     final angleDeg = double.tryParse(_angleCtrl.text);
     final sf = double.tryParse(_sfCtrl.text) ?? 5;
@@ -32,7 +33,7 @@ class _LoadShareCalculatorState extends State<LoadShareCalculator> {
         angleDeg <= 0 ||
         angleDeg > 90 ||
         !sf.isFinite ||
-        sf <= 0) {
+        sf < 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter a valid load and angle (0-90 deg).'),
         ),
@@ -40,11 +41,12 @@ class _LoadShareCalculatorState extends State<LoadShareCalculator> {
       return;
     }
 
-    final result = CalculationEngine.sling(
-      loadKg: load * 1000,
-      effectiveLegs: 2,
-      angleDegrees: angleDeg,
-    );
+    CalculationResult result;
+    try {
+      result=CalculationEngine.sling(loadKg:load*1000,effectiveLegs:2,angleDegrees:angleDeg);
+    } on ArgumentError catch(e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.message.toString())));return;
+    }
     final angleFactor = result.values['angleFactor']!;
     final legLoads = List.filled(_legs, result.values['requiredWllKg']! / 1000);
 
@@ -65,6 +67,7 @@ class _LoadShareCalculatorState extends State<LoadShareCalculator> {
           children: [
             TextField(
               controller: _loadCtrl,
+              onChanged: (_) => setState(() => _legLoads = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(labelText: 'Total Load (t)'),
@@ -84,6 +87,7 @@ class _LoadShareCalculatorState extends State<LoadShareCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _angleCtrl,
+              onChanged: (_) => setState(() => _legLoads = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -93,6 +97,7 @@ class _LoadShareCalculatorState extends State<LoadShareCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _sfCtrl,
+              onChanged: (_) => setState(() => _legLoads = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(labelText: 'Safety Factor'),

@@ -68,7 +68,7 @@ class _SlingAngleCalculatorState extends State<SlingAngleCalculator> {
         throw ArgumentError(
           'Enter load, effective legs, angle and design factor.',
         );
-      CalculationEngine.finite(sf, 'Design factor', positive: true);
+      CalculationEngine.finite(sf, 'Design factor', minimum: 1);
       final rawWll = _wllCtrl.text.trim();
       final wll = rawWll.isEmpty ? null : double.tryParse(rawWll);
       if (rawWll.isNotEmpty && wll == null)

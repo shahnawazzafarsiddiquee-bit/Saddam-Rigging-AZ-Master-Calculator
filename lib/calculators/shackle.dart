@@ -25,6 +25,7 @@ class _ShackleCalculatorState extends State<ShackleCalculator> {
   double? _recommendedSize;
 
   void _calculate() {
+    setState(() => _requiredCapacity = null);
     final load = double.tryParse(_loadCtrl.text);
     final sf = _sfCtrl.text.trim().isEmpty
         ? 1.25
@@ -42,6 +43,9 @@ class _ShackleCalculatorState extends State<ShackleCalculator> {
 
     final loadPerShackle = load / _legs;
     final required = loadPerShackle * sf;
+    if (!required.isFinite) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Result is outside the supported numeric range.')));return;
+    }
     final recommended = _standardShackleSizes.firstWhere(
       (s) => s >= required,
       orElse: () => 0,
@@ -64,6 +68,7 @@ class _ShackleCalculatorState extends State<ShackleCalculator> {
           children: [
             TextField(
               controller: _loadCtrl,
+              onChanged: (_) => setState(() => _requiredCapacity = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(
@@ -86,6 +91,7 @@ class _ShackleCalculatorState extends State<ShackleCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _sfCtrl,
+              onChanged: (_) => setState(() => _requiredCapacity = null),
               keyboardType: const TextInputType.numberWithOptions(decimal: true,
               ),
               decoration: const InputDecoration(

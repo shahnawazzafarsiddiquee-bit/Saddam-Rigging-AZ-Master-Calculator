@@ -35,7 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Restore Backup?'),
-        content: const Text('This will replace ALL current data with the selected backup. Continue?'),
+        content: const Text('This replaces the databases included in the selected backup. A recovery backup is saved first. Legacy backups replace only the main database. External PDF files are not included. Continue?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Restore')),
@@ -72,7 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: ListTile(
               leading: const Icon(Icons.upload_file, color: AppColors.safetyOrange),
               title: const Text('Export Backup'),
-              subtitle: const Text('Save all data (equipment, lift plans, HSE records) to a JSON file'),
+              subtitle: const Text('Save all 3 databases and inspection photos. Keep report PDFs separately.'),
               onTap: _busy ? null : _exportBackup,
             ),
           ),

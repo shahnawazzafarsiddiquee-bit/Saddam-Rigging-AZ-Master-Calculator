@@ -75,6 +75,7 @@ class _WireRopeCalculatorState extends State<WireRopeCalculator> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<_Construction>(
+              isExpanded: true,
               value: _construction,
               decoration: const InputDecoration(labelText: 'Construction / Grade'),
               dropdownColor: const Color(0xFF2A2E33),

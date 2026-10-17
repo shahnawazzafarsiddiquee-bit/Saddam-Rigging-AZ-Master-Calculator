@@ -177,12 +177,14 @@ class ResultRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 15)),
-          Text(value,
+          Expanded(child: Text(label, style: const TextStyle(color: Colors.white70, fontSize: 15))),
+          const SizedBox(width: 12),
+          Flexible(child: Text(value,
+              textAlign: TextAlign.right,
               style: const TextStyle(
                   color: AppColors.textLight,
                   fontSize: 16,
-                  fontWeight: FontWeight.bold)),
+                  fontWeight: FontWeight.bold))),
         ],
       ),
     );

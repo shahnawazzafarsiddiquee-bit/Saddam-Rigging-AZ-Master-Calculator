@@ -132,7 +132,7 @@ class DatabaseBackup {
     if (data.length > 1) {
       for (final schema in data.keys) {
         final mode = await db.rawQuery('PRAGMA $schema.journal_mode');
-        if (mode.single.values.single.toString().toLowerCase() != 'delete') {
+        if (!{'delete', 'truncate', 'persist'}.contains(mode.single.values.single.toString().toLowerCase())) {
           throw StateError('Full restore requires rollback-journal databases. No records were changed.');
         }
       }

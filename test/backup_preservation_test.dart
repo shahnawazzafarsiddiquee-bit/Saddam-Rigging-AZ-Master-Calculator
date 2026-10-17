@@ -183,6 +183,17 @@ void main() {
     expect((await snapshot())['databases'],current['databases']);
   });
 
+  for(final mode in ['TRUNCATE','PERSIST']) {
+    test('rollback-journal $mode supports a complete restore', () async {
+      for(final schema in ['main','pro','pro2']) {
+        await db.rawQuery('PRAGMA $schema.journal_mode=$mode');
+      }
+      final before=await snapshot();
+      await db.rawUpdate('UPDATE main.Equipment SET wll=91');
+      await DatabaseBackup.restore(db,before);
+      expect((await snapshot())['databases'],before['databases']);
+    });
+  }
   test('WAL full restore is blocked before any record changes', () async {
     final before = await snapshot();
     await db.rawQuery('PRAGMA pro.journal_mode=WAL');

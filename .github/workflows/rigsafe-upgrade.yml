@@ -1,0 +1,40 @@
+name: RIGSAFE Upgrade Checks
+on:
+  push:
+    branches: [upgrade/rigsafe-super-pro]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter --version
+      - run: flutter pub get
+      - name: Analyze baseline
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Tests when present
+        run: |
+          if [ -d test ]; then flutter test; fi
+      - name: Reuse existing app signing identity
+        run: |
+          mkdir -p ~/.android
+          cp android/keystore/fixed_debug.p12 ~/.android/debug.keystore
+      - name: Build current Android application
+        run: flutter build apk --debug --build-number=1000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rigsafe-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30

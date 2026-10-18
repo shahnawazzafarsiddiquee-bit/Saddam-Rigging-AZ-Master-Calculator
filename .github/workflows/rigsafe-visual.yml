@@ -5,6 +5,9 @@ on:
     paths:
       - .github/workflows/rigsafe-visual.yml
       - integration_test/android_visual_test.dart
+      - test/android_visual_driver.dart
+      - test/android_device_smoke.sh
+      - test/verify_android_png.py
 permissions:
   contents: read
   actions: read

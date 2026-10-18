@@ -134,14 +134,27 @@ jobs:
         run: |
           mkdir -p ~/.android
           cp android/keystore/fixed_debug.p12 ~/.android/debug.keystore
-      - name: Build optimized ARM64 sideload APK
-        run: flutter build apk --release --target-platform android-arm64 --build-number=${{ needs.verify.outputs.version_code }}
+      - name: Build optimized universal sideload APK
+        run: flutter build apk --release --build-number=${{ needs.verify.outputs.version_code }}
       - name: Keep optimized APK
         run: |
           mkdir -p packages
-          cp build/app/outputs/flutter-apk/app-release.apk packages/Rigsafe-arm64-release-test-signed.apk
+          cp build/app/outputs/flutter-apk/app-release.apk packages/Rigsafe-universal-release-test-signed.apk
       - name: Build AAB with test signing only
         run: flutter build appbundle --release --build-number=${{ needs.verify.outputs.version_code }}
+      - name: Export official SDK signer for private owner-key signing
+        run: |
+          signer=$(find "$ANDROID_HOME/build-tools" -type f -path '*/lib/apksigner.jar' | sort -V | tail -n 1)
+          test -n "$signer"
+          mkdir -p signing-tools
+          cp "$signer" signing-tools/apksigner.jar
+          sha256sum signing-tools/apksigner.jar > signing-tools/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rigsafe-official-signing-tool
+          path: signing-tools/
+          if-no-files-found: error
+          retention-days: 30
       - name: Record package hashes and signing scope
         run: |
           cp build/app/outputs/bundle/release/app-release.aab packages/Rigsafe-release-test-signed.aab

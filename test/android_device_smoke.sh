@@ -12,16 +12,18 @@ launch_and_capture() {
   local label="$1"
   adb logcat -c
   adb shell monkey -p "$package_id" -c android.intent.category.LAUNCHER 1 > "device-evidence/$label-launch.txt"
+  foreground=0
   for attempt in $(seq 1 20); do
-    if adb shell dumpsys activity activities | rg -q "mResumedActivity.*$package_id"; then break; fi
+    if adb shell dumpsys activity activities | grep -E "mResumedActivity.*$package_id" > /dev/null; then foreground=1; break; fi
     sleep 1
   done
+  test "$foreground" = 1
   sleep 4
   adb shell pidof "$package_id" > "device-evidence/$label-pid.txt"
   test -s "device-evidence/$label-pid.txt"
   app_pid=$(tr -d '\r\n' < "device-evidence/$label-pid.txt")
   adb logcat -d --pid="$app_pid" > "device-evidence/$label-logcat.txt"
-  if rg -q 'Unhandled Exception|FATAL EXCEPTION' "device-evidence/$label-logcat.txt"; then
+  if grep -E -q 'Unhandled Exception|FATAL EXCEPTION' "device-evidence/$label-logcat.txt"; then
     cat "device-evidence/$label-logcat.txt"
     return 1
   fi
@@ -35,7 +37,7 @@ for name in saddam_rigging_master.db rigging_pro.db rigging_pro2.db; do
   adb exec-out run-as "$package_id" cat "databases/$name" > "after-update/$name"
 done
 python test/device_fixture.py compare fixtures after-update | tee device-evidence/data-preservation.txt
-signer_path=$(rg --files "$ANDROID_HOME/build-tools" | rg '/apksigner$' | sort -V | tail -n 1)
+signer_path=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
 test -n "$signer_path"
 "$signer_path" verify --verbose --print-certs artifacts/baseline/app-debug.apk > device-evidence/baseline-signature.txt
 "$signer_path" verify --verbose --print-certs artifacts/current/app-debug.apk > device-evidence/upgraded-signature.txt

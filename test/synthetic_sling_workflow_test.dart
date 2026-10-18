@@ -101,6 +101,13 @@ void main() {
     expect(find.text('ACCEPTABLE - CALCULATION ONLY'), findsOneWidget);
     await reveal(tester, find.text('100.00 %'));
     expect(find.text('100.00 %'), findsOneWidget);
+    final loadField = find.widgetWithText(TextField, 'Load weight');
+    await reveal(tester, loadField);
+    tester.widget<TextField>(loadField).controller!.selection =
+        const TextSelection.collapsed(offset: 0);
+    await tester.pumpAndSettle();
+    await reveal(tester, find.text('ACCEPTABLE - CALCULATION ONLY'));
+    expect(find.text('ACCEPTABLE - CALCULATION ONLY'), findsOneWidget);
     await input(tester, 'Load weight', '3');
     expect(find.text('ACCEPTABLE - CALCULATION ONLY'), findsNothing);
     await reveal(tester, find.text('INCOMPLETE - VERIFICATION REQUIRED'));

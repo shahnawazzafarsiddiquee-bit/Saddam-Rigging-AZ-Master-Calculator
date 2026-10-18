@@ -7,8 +7,10 @@ class QrService {
   }
 
   static String? parseEquipmentId(String scanned) {
+    scanned = scanned.trim();
     if (scanned.startsWith('SADDAM-RIG:')) {
-      return scanned.substring('SADDAM-RIG:'.length);
+      final id = scanned.substring('SADDAM-RIG:'.length).trim();
+      return id.isEmpty ? null : id;
     }
     // Fall back to treating the raw scanned text as the equipment ID,
     // in case an older / plain QR label is scanned.

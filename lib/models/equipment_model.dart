@@ -40,21 +40,62 @@ class EquipmentModel {
       id: map['id'] as int?,
       equipmentId: map['equipmentId'] as String,
       type: map['type'] as String,
-      serialNumber: map['serialNumber'] as String,
-      manufacturer: map['manufacturer'] as String,
-      wll: (map['wll'] as num).toDouble(),
-      inspectionDate: map['inspectionDate'] as String,
-      expiryDate: map['expiryDate'] as String,
+      serialNumber: (map['serialNumber'] as String?) ?? '',
+      manufacturer: (map['manufacturer'] as String?) ?? '',
+      wll: double.tryParse('${map['wll'] ?? ''}') ?? 0,
+      inspectionDate: (map['inspectionDate'] as String?) ?? '',
+      expiryDate: (map['expiryDate'] as String?) ?? '',
       status: map['status'] as String,
     );
   }
 
-  bool get isExpired {
-    try {
-      final expiry = DateTime.parse(expiryDate);
-      return DateTime.now().isAfter(expiry);
-    } catch (_) {
-      return false;
-    }
+  /// Date-only expiry remains valid through the recorded local calendar day.
+  /// A missing/invalid date is never treated as evidence of current inspection.
+  bool get isExpired => isExpiredAt(DateTime.now());
+  bool isExpiredAt(DateTime now) {
+    final expiry = validDate(expiryDate);
+    if (expiry == null) return true;
+    return DateTime(now.year, now.month, now.day).isAfter(expiry);
+  }
+
+  static DateTime? validDate(String text) {
+    final value = text.trim();
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) return null;
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null ||
+        parsed.year.toString().padLeft(4, '0') != value.substring(0, 4) ||
+        parsed.month.toString().padLeft(2, '0') != value.substring(5, 7) ||
+        parsed.day.toString().padLeft(2, '0') != value.substring(8, 10))
+      return null;
+    return parsed;
+  }
+
+  bool get isRestricted => restrictedStatus(status);
+  static bool restrictedStatus(String value) => const {
+    'quarantine',
+    'quarantined',
+    'hold',
+    'reject',
+    'rejected',
+    'scrapped',
+    'scrap',
+    'scrap pending',
+    'destroyed',
+  }.contains(value.trim().toLowerCase());
+
+  bool get hasCurrentRegistration => registrationCurrentAt(DateTime.now());
+  bool registrationCurrentAt(DateTime now) {
+    final inspected = validDate(inspectionDate);
+    final today = DateTime(now.year, now.month, now.day);
+    return status == 'Active' &&
+        !isRestricted &&
+        !isExpiredAt(now) &&
+        wll.isFinite &&
+        wll > 0 &&
+        equipmentId.trim().isNotEmpty &&
+        serialNumber.trim().isNotEmpty &&
+        manufacturer.trim().isNotEmpty &&
+        inspected != null &&
+        !inspected.isAfter(today);
   }
 }

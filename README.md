@@ -18,14 +18,14 @@ construction and industrial lifting sites.
 | Shackle Calculator | Required capacity vs. standard bow-shackle sizes |
 | Wire Rope Calculator | Approximate breaking strength by construction/grade, `WLL = Breaking Strength / SF` |
 | D/d Ratio | `D/d = Sheave Diameter / Rope Diameter`, checked against minimum safe ratio |
-| Center of Gravity | Multi-point-load COG (weighted average of X/Y positions) |
+| Center of Gravity | Multi-point-load COG (weighted average of X/Y/Z positions) |
 | Pad Eye Check | Bearing stress + tensile stress vs. allowable stress |
 
-Every calculator shows a clear **SAFE / NOT SAFE** verdict banner.
+Upgraded calculators show calculation-only, review, overload or incomplete-data statuses. Numerical results never authorize a lift. Legacy modules remain under audit; see `docs/upgrade/FEATURE_MATRIX.md`.
 
 ### 2. Crane Planning
 Built-in representative crane load-chart database (mobile / crawler / all-terrain
-cranes) with radius-based capacity interpolation and utilization % check.
+cranes) with exact-row capacity lookup and gross-hook-load utilization checks. Representative rows are unverified reference data; use the applicable manufacturer chart and configuration for actual lift planning.
 
 ### 3. Lift Plan Generator
 Full lift-plan form (project, client, load, crane, rigging arrangement,
@@ -155,3 +155,28 @@ local filesystem. No data is sent to any server.
 ## License
 Internal engineering tool — adapt freely for your organization's rigging and
 lifting operations.
+
+
+## Upgrade branch status
+
+Work is on `upgrade/rigsafe-super-pro`; the existing application name, colours,
+navigation and database schemas are retained. This is an incremental upgrade,
+not completion of every requested enterprise module.
+
+- Baseline APK build: Actions run 39051201748.
+- Verified calculation/backup checkpoint: run 39073629975, 82 tests and debug APK passed.
+- Additional real Android install/update and SQLite restore checks are under verification.
+- Synthetic/web/round sling upgrades add actual tag/configuration sources and
+  separate body/inspection-period colours; new tests are under verification.
+- The original official Critical Lift Plan PDF was not supplied and is not in
+  the repository. Exact-template filling/visual matching is pending that file.
+- BLE, NFC, weather provider, roles, approvals and cloud sync are not configured.
+
+See `docs/upgrade/FEATURE_MATRIX.md`, `MIGRATION_REPORT.md`, `TEST_REPORT.md`,
+`API_CONFIGURATION.md` and `DATABASE.md` for scope and limitations.
+
+**Existing installation warning:** the currently published APK was signed with a
+different key from the fixed repository test key. A direct update requires the
+original private signing key. Do not uninstall an existing app to bypass this:
+its local data may be removed. See the migration report for the exact scope of
+the isolated update test.

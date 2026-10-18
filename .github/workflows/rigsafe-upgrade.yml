@@ -24,6 +24,8 @@ jobs:
           flutter-version: '3.47.7'
           cache: true
       - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
       - id: version
         run: echo "code=$((1000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_OUTPUT"
       - run: flutter --version
@@ -65,6 +67,8 @@ jobs:
           flutter-version: '3.47.7'
           cache: true
       - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
       - uses: actions/download-artifact@v4
         with:
           name: rigsafe-debug
@@ -100,4 +104,48 @@ jobs:
           name: rigsafe-device-evidence
           path: device-evidence/
           if-no-files-found: warn
+          retention-days: 30
+
+  packages:
+    if: contains(github.event.head_commit.message, '[packages]')
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.7'
+          cache: true
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
+      - run: flutter pub get
+      - name: Use existing sideload test signing identity
+        run: |
+          mkdir -p ~/.android
+          cp android/keystore/fixed_debug.p12 ~/.android/debug.keystore
+      - name: Build optimized ARM64 sideload APK
+        run: flutter build apk --release --target-platform android-arm64 --build-number=${{ needs.verify.outputs.version_code }}
+      - name: Keep optimized APK
+        run: |
+          mkdir -p packages
+          cp build/app/outputs/flutter-apk/app-release.apk packages/Rigsafe-arm64-release-test-signed.apk
+      - name: Build AAB with test signing only
+        run: flutter build appbundle --release --build-number=${{ needs.verify.outputs.version_code }}
+      - name: Record package hashes and signing scope
+        run: |
+          cp build/app/outputs/bundle/release/app-release.aab packages/Rigsafe-release-test-signed.aab
+          sha256sum packages/* > packages/SHA256SUMS.txt
+          echo 'Test signing only. This AAB is not ready for Play upload without the owner upload key and release review.' > packages/SIGNING.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rigsafe-test-signed-packages
+          path: packages/
+          if-no-files-found: error
           retention-days: 30

@@ -1,6 +1,7 @@
 # Upgrade feature matrix
 
 Checkpoint: 102 tests and APK/AAB builds passed in run 39092858778; native same-key update/backup and visual run 39095404794 passed. Yes/Partial refers to the described work only, not completion of the entire professional module. Status is authoritative.
+Phase 4: run 39110248646 passed analysis, 110 tests and debug APK at 748a0e510b82bd8d4a16bd4578c175c198f3e536. Later radius work has its own build gate.
 
 | # | Feature | Existing | Upgraded | New | Tested | Status |
 |---|---|---|---|---|---|---|
@@ -28,26 +29,26 @@ Checkpoint: 102 tests and APK/AAB builds passed in run 39092858778; native same-
 | 22 | Sling angle | Partial | Yes | Yes | Yes | Both conventions and 90 degree case; actual configuration WLL/source; form edit invalidation |
 | 23 | Load share | Partial | Yes | Yes | Partial | Two-point and symmetric effective-leg math tested; full unequal multi-point geometry pending |
 | 24 | CG | Partial | Yes | Yes | Yes | XYZ math/input and offset cases tested; requested top/side visual views pending |
-| 25 | Wire rope | Partial | Yes | No | Partial | Finite/overflow validation and estimate labels; inspection/asset lifecycle still pending |
-| 26 | Chain sling | Partial | No | No | No | Audit mapped; upgrade pending |
-| 27 | Round sling | Partial | Yes | No | Partial | Shared synthetic verification upgraded; full inspection/QR/certificate integration pending |
+| 25 | Wire rope | Partial | Yes | No | Partial | Wire-rope validation plus manufacturer-criteria inspection checklist; physical inspection remains a competent-person task |
+| 26 | Chain sling | Partial | Yes | No | Partial | Chain inspection checklist includes grade/diameter/master-link/legs; dedicated asset attributes and complete calculation UI pending |
+| 27 | Round sling | Partial | Yes | No | Partial | Synthetic verification and round-sling inspection linked to registered asset, certificate and QR history |
 | 28 | Shackle calculator | Partial | Yes | Yes | Partial | Catalogue no longer clamps overload; verified manufacturer derating engine; source datasets still required |
-| 29 | Shackle inspection | Partial | No | No | No | Audit mapped; upgrade pending |
-| 30 | Hook inspection | Partial | No | No | No | Audit mapped; upgrade pending |
-| 31 | Master link inspection | Partial | No | No | No | Audit mapped; upgrade pending |
+| 29 | Shackle inspection | Partial | Yes | No | Partial | Dedicated body/pin/threads/wear/corrosion/marking/side-load inspection; offline transaction tested |
+| 30 | Hook inspection | Partial | Yes | No | Partial | Dedicated opening/twist/wear/crack/latch/swivel/ID checklist; no invented rejection dimensions |
+| 31 | Master link inspection | Partial | Yes | Yes | Partial | Dedicated wear/stretch/distortion/crack/heat/corrosion/WLL checklist |
 | 32 | Pad eye | Partial | Yes | No | Partial | Invalid input/overflow guards only; engineering calculation/report extension pending |
 | 33 | Beam assets | No | No | No | No | Implementation pending |
 | 34 | Rigging compatibility | Partial | No | No | No | Audit mapped; upgrade pending |
 | 35 | Edge protection | Partial | Yes | Yes | Partial | Damage and sharp unprotected edge gates tested; full compatibility library pending |
 | 36 | Rigging diagram builder | Partial | No | No | No | Audit mapped; upgrade pending |
 | 37 | Rigging kits | No | No | No | No | Implementation pending |
-| 38 | Asset selection | No | No | No | No | Implementation pending |
-| 39 | Equipment QR | Partial | Yes | No | Partial | Legacy nullable assets, duplicate ID/WLL/date validation, QR payload guards; physical camera scanning pending |
+| 38 | Asset selection | No | Yes | Yes | Partial | Lift Plan selects current registered/certified equipment; revalidates at save. Required-WLL/fit auto-selection pending |
+| 39 | Equipment QR | Partial | Yes | No | Partial | QR asset view links to prefilled inspection and history; camera/device scan still needs field testing |
 | 40 | NFC | No | No | No | No | Pending implementation and external configuration/template/device evidence |
-| 41 | Digital inspections | Partial | No | No | No | Audit mapped; upgrade pending |
-| 42 | Web sling inspection | Partial | No | No | No | Audit mapped; upgrade pending |
-| 43 | Inspection statuses | Partial | No | No | No | Audit mapped; upgrade pending |
-| 44 | Quarantine | Partial | Yes | No | Partial | Restricted aliases recognized; ordinary edits cannot release quarantine; authorized release/history/lift asset binding pending |
+| 41 | Digital inspections | Partial | Yes | No | Partial | Eleven dedicated categories plus preserved legacy category; photos/project/procedure/inspector and typed attestation; identity not authenticated |
+| 42 | Web sling inspection | Partial | Yes | No | Partial | Web-sling checklist covers requested damage categories; incomplete and unjustified N/A cannot pass |
+| 43 | Inspection statuses | Partial | Yes | Yes | Yes | PASS/HOLD/REJECT rules; REJECT quarantines atomically; rollback and all-N/A tests passed |
+| 44 | Quarantine | Partial | Yes | No | Yes | Quarantined gear blocked at lift save; PASS does not release quarantine; audit/history retained. Authorized release workflow pending |
 | 45 | Scrap/destroy | No | No | No | No | Implementation pending |
 | 46 | AI photo screening | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 47 | Certificates | Partial | No | No | No | Audit mapped; upgrade pending |
@@ -56,13 +57,13 @@ Checkpoint: 102 tests and APK/AAB builds passed in run 39092858778; native same-
 | 50 | Competency | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 51 | User roles | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 52 | Company/project | No | No | No | No | Pending implementation and external configuration/template/device evidence |
-| 53 | Lift wizard | Partial | Yes | No | Partial | Existing lift form rejects invalid weight before save/PDF; 13-step wizard pending |
+| 53 | Lift wizard | Partial | Yes | No | Partial | Existing form validates weight and selected equipment at save; records equipment snapshot. Complete 13-step wizard pending |
 | 54 | Critical classification | Partial | No | No | No | Audit mapped; upgrade pending |
 | 55 | Tandem lift | Partial | No | Yes | Partial | Shared tandem load split and utilization math tested; complete UI/configuration/approval pending |
 | 56 | Blind lift | No | No | No | No | Implementation pending |
 | 57 | Power lines | No | No | No | No | Implementation pending |
 | 58 | Exclusion zone | No | No | No | No | Implementation pending |
-| 59 | Crane inspection | Partial | No | No | No | Audit mapped; upgrade pending |
+| 59 | Crane inspection | Partial | Yes | No | Partial | Crane pre-use checklist added to existing inspection workflow; configured permit gating pending |
 | 60 | Permit to lift | No | No | No | No | Implementation pending |
 | 61 | JSA | Partial | No | No | No | Audit mapped; upgrade pending |
 | 62 | TBT | Partial | No | No | No | Audit mapped; upgrade pending |
@@ -73,7 +74,7 @@ Checkpoint: 102 tests and APK/AAB builds passed in run 39092858778; native same-
 | 67 | Approval workflow | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 68 | Digital signature | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 69 | Revisions | Partial | No | No | No | Audit mapped; upgrade pending |
-| 70 | Audit trail | No | No | No | No | Implementation pending |
+| 70 | Audit trail | No | Yes | Yes | Partial | Inspection/quarantine audit and Lift Equipment snapshots atomic; complete application-wide audit pending |
 | 71 | Exact PDF template | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 72 | PDF autofill | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 73 | PDF visual test | No | No | No | No | Pending implementation and external configuration/template/device evidence |

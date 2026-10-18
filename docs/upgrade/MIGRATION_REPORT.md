@@ -60,3 +60,13 @@ the differently signed published APK.
 ## Completed native checkpoint
 
 Run 39092858778 passed all four jobs, including 102 tests, native 12-table preservation and actual SQLite rollback. Visual run 39095404794 independently repeated the same-key install/update and captured rendered Android screens. No production data was modified. Nullable legacy equipment values are handled when reading; no destructive rewrite or schema migration was introduced.
+
+## Owner-supplied key check
+
+The supplied keystore unlocks successfully and has certificate SHA256
+`aea20140ec1a0639451afc46384ed7b8caef1e4965c929bc646977eeb5942ce4`.
+It differs from both the published APK and repository test certificate. It may serve as an upload key, but it does not prove compatibility with the user's installed APK. No password or private key is committed.
+
+## Phase 4 storage changes
+
+Existing `pro2.inspections.details` keeps original answer lines with a versioned META JSON suffix; existing viewers retain legacy support. Photos remain in `pro2.photos`. Existing main `SafetyRecords` stores equipment audit and immutable lift-equipment snapshots. All tables/IDs/schema versions remain unchanged. New inspection history is retained; PASS cannot release restricted equipment. Transactions use the same serialized attachment guard as backup/restore.

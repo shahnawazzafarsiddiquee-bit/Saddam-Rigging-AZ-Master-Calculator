@@ -31,3 +31,9 @@ Debug and optimized APK/AAB are test-signed, versionCode 1012, versionName 1.0.0
 No database migration was needed: all three schemas remain version 1. External PDF paths are backed up, not PDF bytes; keep those documents separately. Android document-picker/share flows, camera/OCR/QR hardware permissions, real BLE/NFC/weather/cloud and every legacy workflow are not end-to-end certified by these tests.
 
 The exact original Critical Lift Plan PDF was not supplied. Overlay/autofill and its exact visual test remain pending. Full role/approval/audit/sync, complete lift wizard, inspection lifecycle, live lift, toolroom, personnel and later modules remain unfinished; see FEATURE_MATRIX.md for all 113 entries. Calculations are decision support and never authorize a lift.
+
+## Phase 4 inspection and lift-equipment gate
+
+Run 39110248646, source 748a0e510b82bd8d4a16bd4578c175c198f3e536: analysis, **110 tests**, debug APK and fixed-key signature verification passed. Eight new tests exercise failure quarantine, incomplete/all-N/A HOLD, PASS preserving quarantine, late cross-database rollback, malformed answers/unknown assets, stale quarantine at lift save, missing/expired certificates, and atomic selected-equipment snapshots. Native device and release-package jobs were not requested in this run.
+
+New inspection metadata has a named offline attestation; it is not an authenticated digital signature. No schema version change. This phase does not complete every inspection/approval/permit requirement.

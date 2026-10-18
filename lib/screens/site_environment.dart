@@ -352,6 +352,9 @@ class _WindCheckScreenState extends State<WindCheckScreen> {
                       ),
                       Text(assessment!.explanation),
                       const Text(
+                        'Point-in-time check only; this screen does not monitor live wind. Press Check again before use.',
+                      ),
+                      const Text(
                         'Decision support only. Authorized personnel must approve the lift.',
                       ),
                     ],

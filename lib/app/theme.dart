@@ -150,15 +150,16 @@ class SafetyStatusBanner extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 32),
           const SizedBox(width: 12),
-          Text(
+          Flexible(child: Text(
             isSafe ? safeText : unsafeText,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: color,
               fontSize: 22,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.2,
             ),
-          ),
+          )),
         ],
       ),
     );

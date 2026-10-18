@@ -18,7 +18,17 @@ done
 launch_and_capture() {
   local label="$1"
   adb logcat -c
-  adb shell monkey -p "$package_id" -c android.intent.category.LAUNCHER 1 > "device-evidence/$label-launch.txt"
+  # Cold Google emulator images can leave a Pixel Launcher ANR dialog above
+  # a healthy app. Restart only that test-environment launcher; never dismiss
+  # or hide a crash/ANR belonging to the application under test.
+  if [ "${VERIFY_VISIBLE_DASHBOARD:-0}" = 1 ]; then
+    for launcher in com.google.android.apps.nexuslauncher com.android.launcher3; do
+      if adb shell pm list packages "$launcher" | grep -F "package:$launcher" > /dev/null; then
+        adb shell am force-stop "$launcher"
+      fi
+    done
+  fi
+  adb shell am start -W -n "$package_id/.MainActivity" > "device-evidence/$label-launch.txt"
   foreground=0
   for attempt in $(seq 1 20); do
     adb shell dumpsys activity activities > "device-evidence/$label-activities.txt"

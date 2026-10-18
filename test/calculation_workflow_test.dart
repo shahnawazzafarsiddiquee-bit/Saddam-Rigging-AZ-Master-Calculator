@@ -131,6 +131,7 @@ void main() {
       await enter(tester, 'Wind speed', '0');
       final button = find.widgetWithText(ElevatedButton, 'Check');
       await tester.ensureVisible(button);
+      await tester.pumpAndSettle();
       await tester.tap(button);
       await tester.pumpAndSettle();
       expect(

@@ -124,10 +124,15 @@ void main() {
   testWidgets('manual radius workflow invalidates result when inputs change', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(432, 960);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(home: CraneBoomScreen()));
     Future<void> enter(String label, String value) async {
       final finder = find.widgetWithText(TextField, label);
       await tester.ensureVisible(finder);
+      await tester.pumpAndSettle();
       await tester.enterText(finder, value);
       await tester.pump();
     }
@@ -138,6 +143,7 @@ void main() {
     await enter('Maximum entire-path radius (m)', '5');
     final button = find.widgetWithText(ElevatedButton, 'Calculate');
     await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
     await tester.tap(button);
     await tester.pump();
     expect(find.text('pickM: 3.000 m'), findsOneWidget);
@@ -145,6 +151,7 @@ void main() {
     await enter('Pick radius (m)', '-1');
     expect(find.text('Save radius record'), findsNothing);
     await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
     await tester.tap(button);
     await tester.pump();
     expect(find.text('Save radius record'), findsNothing);

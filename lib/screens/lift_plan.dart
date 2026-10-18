@@ -28,6 +28,7 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
   final _safetyCtrl = TextEditingController();
 
   bool _saving = false;
+  String? _weightError;
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -53,13 +54,13 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
       _loadWeightCtrl.text.trim().replaceAll(',', '.'),
     );
     if (loadWeight == null || !loadWeight.isFinite || loadWeight <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Load weight must be finite and greater than zero.'),
-        ),
+      setState(
+        () =>
+            _weightError = 'Load weight must be finite and greater than zero.',
       );
       return;
     }
+    setState(() => _weightError = null);
     setState(() => _saving = true);
     try {
       await SqliteHelper.instance.insert('LiftPlans', {
@@ -142,6 +143,7 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
     String label, {
     int maxLines = 1,
     TextInputType? type,
+    String? errorText,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -149,7 +151,7 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
         controller: c,
         maxLines: maxLines,
         keyboardType: type,
-        decoration: InputDecoration(labelText: label),
+        decoration: InputDecoration(labelText: label, errorText: errorText),
       ),
     );
   }
@@ -181,6 +183,7 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
               _loadWeightCtrl,
               'Load Weight (t)',
               type: const TextInputType.numberWithOptions(decimal: true),
+              errorText: _weightError,
             ),
             _field(_craneDetailsCtrl, 'Crane Details', maxLines: 2),
             _field(_riggingCtrl, 'Rigging Arrangement', maxLines: 3),

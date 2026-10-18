@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:saddam_rigging_az_master_calculator/main.dart';
 import 'package:saddam_rigging_az_master_calculator/app/theme.dart';
 import 'package:saddam_rigging_az_master_calculator/database/sqlite_helper.dart';
@@ -15,7 +12,6 @@ void main() {
   testWidgets('render real dashboard, legacy equipment and synthetic screen', (
     tester,
   ) async {
-    final directory = await getApplicationDocumentsDirectory();
     await tester.pumpWidget(const SaddamRiggingApp());
     await tester.pumpAndSettle();
     expect(find.text('SADDAM RIGGING A-Z'), findsOneWidget);
@@ -26,8 +22,6 @@ void main() {
       await tester.pumpAndSettle();
       final bytes = await binding.takeScreenshot(name);
       expect(bytes.length, greaterThan(1000));
-      await File('${directory.path}/$name.png')
-          .writeAsBytes(bytes, flush: true);
     }
 
     await capture('verified-dashboard');

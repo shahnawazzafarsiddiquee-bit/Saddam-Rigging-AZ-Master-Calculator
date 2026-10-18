@@ -1,32 +1,33 @@
-# Verification report
+# Verified upgrade checkpoint — 18 October 2026
 
-## Verified checkpoint
+This is an incremental upgrade, not completion of all 113 requested modules.
+Application source: 8388a0e6a55f60d242b4b5a3286d5562f173ee6c.
+Subsequent commits through 0955e4b9c205ee903663e88e930484916c205bea change tests/workflows only; application source/resources are identical.
+Branch: upgrade/rigsafe-super-pro. Draft pull request: #5. Main is unchanged.
 
-Run 39073629975, commit 1f913aff884350e585415e90b55b30fed7f7e9a0:
-static analysis completed, all 82 tests passed and debug APK compilation passed.
+## Passed
 
-The suite covered frozen released database schemas/12-table backup restoration,
-legacy preservation, invalid backup rejection, late transaction rollback,
-53 screen construction/layout cases, the original theme palette, numerical
-calculation boundaries and seven existing calculator form workflows.
+- Build run 39092858778: static analysis, **102 unit/widget tests**, debug APK, optimized ARM64 APK and test-signed AAB.
+- Android API 35 Pixel 6 emulator: in-place install from original-source baseline rebuilt with the same fixed test key; all 12 version-1 tables, original IDs and photo bytes survived.
+- Native BackupService integration: real SQLite/path-provider round trip, malformed backup rejection, late transaction failure rollback across all three databases, and recovery snapshots.
+- Visual run 39095404794: actual delivered version 1012 APK rendered before/after update; dashboard, equipment and synthetic sling PNGs exported and decoded successfully. Images inspected after download. These use disposable fixtures, not user data.
+- Original nine colour constants retained; source assertions and 53 existing-screen construction/layout cases pass. Full pixel regression of every screen is not claimed.
+- Downloaded artifact ZIP SHA-256 digests/CRC validated; delivered APK/AAB SHA-256 values match the verified build. Android apksigner verified the debug APK fixed certificate.
 
-Screen construction is not proof that every feature, camera, OCR, QR, file
-picker, PDF share, hardware integration or operating-system permission works.
-No production device database was supplied.
+## Coverage
 
-## Additional verification in progress
+Shared-engine checks cover finite/domain boundaries, both sling-angle conventions, zero/low/30/45/60/90-degree cases, missing WLL, capacity equality/overload, CG/load share, gross load/utilization, manufacturer-factor shackle/synthetic capacity, radius/boom geometry, ground pressure/mats, unit conversion and tandem math. UI checks cover edited-input invalidation, synthetic tag/source/damage/edge gates, legacy nullable equipment, invalid expiry/ratings, restricted equipment edits, QR payload parsing and invalid lift weight.
 
-- Run 39091132004: 84 tests and APK passed; native update failed due to signing-certificate mismatch and a missing runner utility. Test runner and explicit signing path are being corrected.
-- Synthetic sling capacity/source/damage/edge tests and real form interaction.
-- The emulator seeds disposable v1 fixtures, installs the baseline APK and
-  updates in place; it compares every table/ID/photo blob, checks signer identity,
-  captures dashboard screenshots and exercises native restore/rollback.
+## Failures corrected
 
-The published APK uses a different certificate from the fixed repository key.
-Its original private signing key is required for a data-preserving update; do
-not uninstall the existing app. A rebuilt original-source baseline with the
-fixed key checks schema/data compatibility only, not published-APK compatibility.
+Earlier runs exposed phone-width overflow, a snackbar covering Save, generated debug-key mismatch, premature splash screenshots, screenshot export after integration cleanup, and a Pixel Launcher ANR in the emulator. Product layout/validation and signing-path fixes plus deterministic launch, official screenshot driver and PNG verification resolved the applicable checks. No application crash checks were disabled. Latest applicable build, native backup and visual jobs pass.
 
-Only actual completed job evidence will be marked passed. Pending modules and
-manual/device requirements are tracked in FEATURE_MATRIX.md. The official PDF
-visual regression test cannot run until the original template is supplied.
+## Important limits
+
+The published APK certificate differs from this fixed test key. These packages cannot update that installed binary in place. Its original private signing key is required; **do not uninstall the existing app to bypass the mismatch**. The same-key fixture migration test does not establish published-binary update compatibility. No production device/database was tested.
+
+Debug and optimized APK/AAB are test-signed, versionCode 1012, versionName 1.0.0. Optimized APK is ARM64 only. The AAB is not Play-ready. A production build needs proper signing and a versionCode greater than the installed version; the old main workflow counter must be corrected before publishing.
+
+No database migration was needed: all three schemas remain version 1. External PDF paths are backed up, not PDF bytes; keep those documents separately. Android document-picker/share flows, camera/OCR/QR hardware permissions, real BLE/NFC/weather/cloud and every legacy workflow are not end-to-end certified by these tests.
+
+The exact original Critical Lift Plan PDF was not supplied. Overlay/autofill and its exact visual test remain pending. Full role/approval/audit/sync, complete lift wizard, inspection lifecycle, live lift, toolroom, personnel and later modules remain unfinished; see FEATURE_MATRIX.md for all 113 entries. Calculations are decision support and never authorize a lift.

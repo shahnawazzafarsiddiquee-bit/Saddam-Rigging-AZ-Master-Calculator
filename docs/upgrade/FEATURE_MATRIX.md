@@ -1,6 +1,6 @@
 # Upgrade feature matrix
 
-Phase 2 verified checkpoint (run 39073629975: analysis, 82 tests, debug APK passed). Existing means some relevant implementation is present, not that the requested professional behavior is complete. No upgrade phase is marked tested before its CI evidence exists.
+Checkpoint: 102 tests and APK/AAB builds passed in run 39092858778; native same-key update/backup and visual run 39095404794 passed. Yes/Partial refers to the described work only, not completion of the entire professional module. Status is authoritative.
 
 | # | Feature | Existing | Upgraded | New | Tested | Status |
 |---|---|---|---|---|---|---|
@@ -20,17 +20,17 @@ Phase 2 verified checkpoint (run 39073629975: analysis, 82 tests, debug APK pass
 | 14 | Outrigger mats | Partial | Yes | Yes | Partial | Required/provided area and utilization math tested; structural mat design/drawing pending |
 | 15 | Outrigger reaction | No | No | No | No | Implementation pending |
 | 16 | Crane visualizer | Partial | No | No | No | Audit mapped; upgrade pending |
-| 17 | Synthetic sling | Partial | No | No | No | Audit mapped; upgrade pending |
-| 18 | Web sling | Partial | No | No | No | Audit mapped; upgrade pending |
-| 19 | Sling colour reference | Partial | No | No | No | Audit mapped; upgrade pending |
-| 20 | Body vs inspection colour | No | No | No | No | Implementation pending |
+| 17 | Synthetic sling | Partial | Yes | Yes | Partial | Existing form upgraded with tag/configuration/source verification and tested assembly-factor math; complete asset linkage pending |
+| 18 | Web sling | Partial | Yes | Yes | Partial | Vertical/choker/basket/double-basket/bridle with supplied approved assembly factor; no universal rating assumed |
+| 19 | Sling colour reference | Partial | Yes | No | Partial | Reference chart marked UNVERIFIED; tag required; managed standard/manufacturer/revision datasets pending |
+| 20 | Body vs inspection colour | No | No | Yes | Partial | Separate fields and result metadata; persistent inspection-period lifecycle pending |
 | 21 | Sling tag OCR | No | No | No | No | Implementation pending |
 | 22 | Sling angle | Partial | Yes | Yes | Yes | Both conventions and 90 degree case; actual configuration WLL/source; form edit invalidation |
 | 23 | Load share | Partial | Yes | Yes | Partial | Two-point and symmetric effective-leg math tested; full unequal multi-point geometry pending |
-| 24 | CG | Partial | Yes | Yes | Yes | Existing CG screen supports XYZ; engine and offset cases tested |
+| 24 | CG | Partial | Yes | Yes | Yes | XYZ math/input and offset cases tested; requested top/side visual views pending |
 | 25 | Wire rope | Partial | Yes | No | Partial | Finite/overflow validation and estimate labels; inspection/asset lifecycle still pending |
 | 26 | Chain sling | Partial | No | No | No | Audit mapped; upgrade pending |
-| 27 | Round sling | Partial | No | No | No | Audit mapped; upgrade pending |
+| 27 | Round sling | Partial | Yes | No | Partial | Shared synthetic verification upgraded; full inspection/QR/certificate integration pending |
 | 28 | Shackle calculator | Partial | Yes | Yes | Partial | Catalogue no longer clamps overload; verified manufacturer derating engine; source datasets still required |
 | 29 | Shackle inspection | Partial | No | No | No | Audit mapped; upgrade pending |
 | 30 | Hook inspection | Partial | No | No | No | Audit mapped; upgrade pending |
@@ -38,16 +38,16 @@ Phase 2 verified checkpoint (run 39073629975: analysis, 82 tests, debug APK pass
 | 32 | Pad eye | Partial | Yes | No | Partial | Invalid input/overflow guards only; engineering calculation/report extension pending |
 | 33 | Beam assets | No | No | No | No | Implementation pending |
 | 34 | Rigging compatibility | Partial | No | No | No | Audit mapped; upgrade pending |
-| 35 | Edge protection | Partial | No | No | No | Audit mapped; upgrade pending |
+| 35 | Edge protection | Partial | Yes | Yes | Partial | Damage and sharp unprotected edge gates tested; full compatibility library pending |
 | 36 | Rigging diagram builder | Partial | No | No | No | Audit mapped; upgrade pending |
 | 37 | Rigging kits | No | No | No | No | Implementation pending |
 | 38 | Asset selection | No | No | No | No | Implementation pending |
-| 39 | Equipment QR | Partial | No | No | No | Audit mapped; upgrade pending |
+| 39 | Equipment QR | Partial | Yes | No | Partial | Legacy nullable assets, duplicate ID/WLL/date validation, QR payload guards; physical camera scanning pending |
 | 40 | NFC | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 41 | Digital inspections | Partial | No | No | No | Audit mapped; upgrade pending |
 | 42 | Web sling inspection | Partial | No | No | No | Audit mapped; upgrade pending |
 | 43 | Inspection statuses | Partial | No | No | No | Audit mapped; upgrade pending |
-| 44 | Quarantine | Partial | No | No | No | Audit mapped; upgrade pending |
+| 44 | Quarantine | Partial | Yes | No | Partial | Restricted aliases recognized; ordinary edits cannot release quarantine; authorized release/history/lift asset binding pending |
 | 45 | Scrap/destroy | No | No | No | No | Implementation pending |
 | 46 | AI photo screening | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 47 | Certificates | Partial | No | No | No | Audit mapped; upgrade pending |
@@ -56,7 +56,7 @@ Phase 2 verified checkpoint (run 39073629975: analysis, 82 tests, debug APK pass
 | 50 | Competency | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 51 | User roles | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 52 | Company/project | No | No | No | No | Pending implementation and external configuration/template/device evidence |
-| 53 | Lift wizard | Partial | No | No | No | Audit mapped; upgrade pending |
+| 53 | Lift wizard | Partial | Yes | No | Partial | Existing lift form rejects invalid weight before save/PDF; 13-step wizard pending |
 | 54 | Critical classification | Partial | No | No | No | Audit mapped; upgrade pending |
 | 55 | Tandem lift | Partial | No | Yes | Partial | Shared tandem load split and utilization math tested; complete UI/configuration/approval pending |
 | 56 | Blind lift | No | No | No | No | Implementation pending |
@@ -98,22 +98,22 @@ Phase 2 verified checkpoint (run 39073629975: analysis, 82 tests, debug APK pass
 | 92 | AI assistant | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 93 | Approved library | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 94 | Calculation sources | No | No | Yes | Partial | Engine source classification and method/warnings; full reference library pending |
-| 95 | Calculation engine | No | No | Yes | Yes | Dedicated pure-Dart calculation engine with typed results and source gates |
-| 96 | Units | Partial | Yes | Yes | Yes | Canonical kg/m/N/Pa/m/s and dimension-checked metric/imperial conversion |
+| 95 | Calculation engine | No | No | Yes | Yes | Dedicated tested engine; remaining legacy UI calculations still need integration |
+| 96 | Units | Partial | Yes | Yes | Yes | Canonical units and converter tested; app-wide unit preference and remaining legacy integration pending |
 | 97 | Validation | Partial | Yes | Yes | Partial | Finite/domain/overflow checks in upgraded calculators; all assets/permits not yet gated |
-| 98 | Automated calculation tests | No | No | Yes | Yes | 82 tests passed in run 39073629975; added native/journal checks under verification |
+| 98 | Automated calculation tests | No | No | Yes | Yes | 102 unit/widget tests passed; separate native backup and visual checks passed |
 | 99 | Edge tests | No | No | Yes | Partial | Angles, zero/missing ratings, overload, CG, source gates tested; device outages pending |
-| 100 | Visual regression | No | No | Yes | Partial | Original palette/button assertions and 53 screen construction checks; pixel regression pending |
-| 101 | Migration tests | No | No | Yes | Partial | Frozen v1 schemas/12-table restore/IDs/blobs tests pass; native update check in progress |
+| 100 | Visual regression | No | No | Yes | Partial | Original palette assertions, 53 screen constructions and native dashboard/equipment/synthetic screenshots pass; full pixel regression pending |
+| 101 | Migration tests | No | No | Yes | Partial | 12-table IDs/photo blobs, real Android backup/rollback and same-key in-place update passed; published-key/production device unavailable |
 | 102 | Performance | Partial | No | No | No | Audit mapped; upgrade pending |
 | 103 | Security | Partial | No | No | No | Audit mapped; upgrade pending |
 | 104 | Weather key security | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 105 | Incomplete-data handling | Partial | Yes | Yes | Partial | Upgraded modules display incomplete until source verification; legacy modules remain to audit |
 | 106 | Human authorization | Partial | Yes | Yes | Partial | Engine results always require human authorization; full role workflow pending |
 | 107 | Feature flags | No | No | No | No | Implementation pending |
-| 108 | Phased delivery | No | No | Yes | Partial | Baseline and phases 1/2 APKs built; phase 2 native validation in progress |
+| 108 | Phased delivery | No | No | Yes | Partial | Baseline, backup/calculation and synthetic/legacy asset checkpoints built/tested; later phases pending |
 | 109 | Preserve existing features | Partial | Yes | No | Partial | Existing screens/routes retained; no schema deletion or redesign; broader regression pending |
 | 110 | Feature matrix | No | No | Yes | Manual | All 113 requirements tracked; partial items explicitly identified |
-| 111 | Deliverables | No | No | No | No | Implementation pending |
-| 112 | Final report | No | No | No | No | Implementation pending |
+| 111 | Deliverables | No | No | Yes | Partial | Source branch, draft PR5, debug APK, test-signed ARM64 APK/AAB, reports and screenshots; production signing pending |
+| 112 | Final report | No | No | Yes | Partial | Checkpoint report delivered; full enterprise completion pending |
 | 113 | Decision-support limits | Partial | Yes | Yes | Partial | Source/assumption/warning detail in shared result UI; broader legacy checks still pending |

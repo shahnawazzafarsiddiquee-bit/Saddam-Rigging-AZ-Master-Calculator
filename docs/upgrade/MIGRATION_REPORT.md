@@ -24,8 +24,7 @@ was supplied; no claim of a production-device migration is made.
 ## Limits
 External PDFs are referenced by path, not embedded. Keep original PDFs separately.
 The settings screen and backup metadata state this limitation.
-Actual Android file selection/sharing and in-place device installation still
-require runtime verification. Unit tests cannot verify these platform flows.
+Native same-key in-place installation and SQLite restore/rollback passed in run 39092858778. Android file selection/sharing and production-device upgrade remain unverified.
 
 ## Tests and runtime checks
 Frozen schema fixtures reproduce all 12 tables from the released commit.
@@ -57,3 +56,7 @@ only the signing-path fix, then installs its v1 fixtures and updates to the
 new build signed by the same fixed key. This verifies data/schema compatibility
 and a stable key for future builds; it does not establish compatibility with
 the differently signed published APK.
+
+## Completed native checkpoint
+
+Run 39092858778 passed all four jobs, including 102 tests, native 12-table preservation and actual SQLite rollback. Visual run 39095404794 independently repeated the same-key install/update and captured rendered Android screens. No production data was modified. Nullable legacy equipment values are handled when reading; no destructive rewrite or schema migration was introduced.

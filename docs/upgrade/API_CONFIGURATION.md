@@ -22,3 +22,7 @@ The upgrade workflow uses only the built-in short-lived GitHub token with
 contents/actions read permissions. It does not publish to Play or change
 production release assets. Existing fixed debug signing is for sideload tests;
 a Play release needs the owner's private upload signing configuration.
+
+## Release compatibility gate
+
+Delivered checkpoint packages use versionCode 1012 and the repository test key. Before production publishing, use the correct original/private release signing key and a monotonically higher versionCode. The main workflow's old run-number counter is not sufficient after installing 1012. No production publishing is performed by this checkpoint.

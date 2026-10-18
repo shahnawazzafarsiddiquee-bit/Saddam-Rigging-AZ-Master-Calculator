@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'rigging_pro.dart';
+import 'smart_radius.dart';
+export 'smart_radius.dart' show CraneBoomScreen;
 import '../services/calculation_engine.dart';
 import '../app/calculation_details.dart';
 
@@ -51,17 +53,18 @@ Widget _results(List<_R> rs) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: rs
-            .map((r) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(
-                    r.t,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: _col(r.lvl),
-                    ),
+            .map(
+              (r) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  r.t,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _col(r.lvl),
                   ),
                 ),
+              ),
             )
             .toList(),
       ),
@@ -70,9 +73,7 @@ Widget _results(List<_R> rs) {
 }
 
 Widget _note(String s) {
-  return Padding(
-    padding: const EdgeInsets.only(top: 12),
-    child: Text(s));
+  return Padding(padding: const EdgeInsets.only(top: 12), child: Text(s));
 }
 
 Widget _page(String title, List<Widget> children) {
@@ -100,30 +101,48 @@ class AdvancedRiggingScreen extends StatelessWidget {
           title: Text(title),
           subtitle: Text(sub),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (_) => page)),
+          onTap: () =>
+              Navigator.push(context, MaterialPageRoute(builder: (_) => page)),
         ),
       );
     }
 
     return _page('Advanced Rigging', [
-      tile(Icons.straighten, 'Sling Length & Angle',
-          'Container / pipe: sling length, angle, size',
-          const SlingLengthScreen(),
+      tile(
+        Icons.straighten,
+        'Sling Length & Angle',
+        'Container / pipe: sling length, angle, size',
+        const SlingLengthScreen(),
       ),
-      tile(Icons.precision_manufacturing, 'Crane Boom & Capacity',
-          'Boom length, angle, utilization %', const CraneBoomScreen(),
+      tile(
+        Icons.precision_manufacturing,
+        'Crane Boom & Capacity',
+        'Boom length, angle, utilization %',
+        const CraneBoomScreen(),
       ),
-      tile(Icons.air, 'Wind Check', 'Wind force on load, go / no-go',
-          const WindCheckScreen(),
+      tile(
+        Icons.air,
+        'Wind Check',
+        'Wind force on load, go / no-go',
+        const WindCheckScreen(),
       ),
-      tile(Icons.compare_arrows, 'CG Load Share',
-          '2 point lift: load per point & sling', const CgShareScreen(),
+      tile(
+        Icons.compare_arrows,
+        'CG Load Share',
+        '2 point lift: load per point & sling',
+        const CgShareScreen(),
       ),
-      tile(Icons.terrain, 'Ground Bearing', 'Outrigger mat pressure',
-          const GroundBearingScreen(),
+      tile(
+        Icons.terrain,
+        'Ground Bearing',
+        'Outrigger mat pressure',
+        const GroundBearingScreen(),
       ),
-      tile(Icons.handyman, 'Pro Tools', 'Crane chart, lift plan PDF, capacity, certificates', const ProToolsScreen(),
+      tile(
+        Icons.handyman,
+        'Pro Tools',
+        'Crane chart, lift plan PDF, capacity, certificates',
+        const ProToolsScreen(),
       ),
       _note(_disclaimer),
     ]);
@@ -139,7 +158,23 @@ class SlingLengthScreen extends StatefulWidget {
 
 class _SlingLengthScreenState extends State<SlingLengthScreen> {
   static const List<double> sizes = [
-    8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 44, 48, 52,
+    8,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    22,
+    24,
+    26,
+    28,
+    32,
+    36,
+    40,
+    44,
+    48,
+    52,
   ];
   final load = TextEditingController();
   final len = TextEditingController(text: '12');
@@ -156,8 +191,9 @@ class _SlingLengthScreenState extends State<SlingLengthScreen> {
     final th = _n(ang);
     final av = _n(avail);
     if (w <= 0 || a <= 0 || th <= 0 || th >= 90 || (legs == 4 && b <= 0)) {
-      setState(() => out = [
-            const _R('Load, length aur angle sahi daalo (4 leg me width bhi)', 3),
+      setState(
+        () => out = [
+          const _R('Load, length aur angle sahi daalo (4 leg me width bhi)', 3),
         ],
       );
       return;
@@ -186,31 +222,37 @@ class _SlingLengthScreenState extends State<SlingLengthScreen> {
     } else if (th >= 45) {
       res.add(const _R('Angle 45-60: chalega, par 60 behtar hai', 2));
     } else {
-      res.add(const _R(
-          'Angle 45 se kam: KHATRA. Sling lambi karo ya spreader beam lo', 3,
+      res.add(
+        const _R(
+          'Angle 45 se kam: KHATRA. Sling lambi karo ya spreader beam lo',
+          3,
         ),
       );
     }
     if (pick > 0) {
-      res.add(_R(
+      res.add(
+        _R(
           'Wire rope sling (6x36 IWRC) kam se kam ${_f(pick, 0)} mm (WLL approx ${_f(pick * pick / 100)} ton)',
           1,
         ),
       );
     } else {
-      res.add(const _R(
-          '52 mm se bada chahiye: spreader beam ya engineer se poochho', 3,
+      res.add(
+        const _R(
+          '52 mm se bada chahiye: spreader beam ya engineer se poochho',
+          3,
         ),
       );
     }
     if (legs == 4) {
-      res.add(const _R(
-          '4 leg me safe side ke liye sirf 2 leg carry maane hain', 2),
+      res.add(
+        const _R('4 leg me safe side ke liye sirf 2 leg carry maane hain', 2),
       );
     }
     if (av > 0) {
       if (av <= run) {
-        res.add(const _R(
+        res.add(
+          const _R(
             'Aapki sling bahut chhoti hai (leg length horizontal doori se badi honi chahiye)',
             3,
           ),
@@ -219,7 +261,8 @@ class _SlingLengthScreenState extends State<SlingLengthScreen> {
         final ta = math.acos(run / av);
         final tt = w / (2 * math.sin(ta));
         final lv = ta >= _rad(60) ? 1 : (ta >= _rad(45) ? 2 : 3);
-        res.add(_R(
+        res.add(
+          _R(
             'Aapki ${_f(av)} m sling se angle: ${_f(_deg(ta), 1)} deg, load per leg ${_f(tt)} ton',
             lv,
           ),
@@ -244,18 +287,18 @@ class _SlingLengthScreenState extends State<SlingLengthScreen> {
     return _page('Sling Length & Angle', [
       _field(load, 'Load weight', suffix: 'ton'),
       _field(len, 'Lifting points ke beech length', suffix: 'm'),
-      if (legs == 4)
-        _field(wid, 'Lifting points ke beech width', suffix: 'm'),
+      if (legs == 4) _field(wid, 'Lifting points ke beech width', suffix: 'm'),
       _field(ang, 'Target sling angle (horizontal se)', suffix: 'deg'),
       _field(avail, 'Aapke paas sling ki length (optional)', suffix: 'm'),
       Wrap(
         spacing: 8,
         children: [2, 4]
-            .map((n) => ChoiceChip(
-                  label: Text('$n leg'),
-                  selected: legs == n,
-                  onSelected: (_) => setState(() => legs = n),
-                ),
+            .map(
+              (n) => ChoiceChip(
+                label: Text('$n leg'),
+                selected: legs == n,
+                onSelected: (_) => setState(() => legs = n),
+              ),
             )
             .toList(),
       ),
@@ -263,125 +306,7 @@ class _SlingLengthScreenState extends State<SlingLengthScreen> {
       ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
-          'Container: 12 m x 2.44 m, 4 leg. Pipe: 2 leg, length = dono sling points ke beech doori. Wire rope size rule: WLL = d x d / 100 ton (estimate).',
-      ),
-      _note(_disclaimer),
-    ]);
-  }
-}
-
-// ---------------- Crane boom & capacity ----------------
-class CraneBoomScreen extends StatefulWidget {
-  const CraneBoomScreen({super.key});
-  @override
-  State<CraneBoomScreen> createState() => _CraneBoomScreenState();
-}
-
-class _CraneBoomScreenState extends State<CraneBoomScreen> {
-  final load = TextEditingController();
-  final rig = TextEditingController(text: '0.5');
-  final rad = TextEditingController();
-  final land = TextEditingController(text: '10');
-  final lht = TextEditingController(text: '2');
-  final slh = TextEditingController(text: '3');
-  final clr = TextEditingController(text: '3');
-  final off = TextEditingController(text: '1.5');
-  final foot = TextEditingController(text: '2');
-  final chart = TextEditingController();
-  List<_R> out = [];
-
-  void calc() {
-    final w = _n(load);
-    final rg = _n(rig);
-    final r = _n(rad);
-    final x = r - _n(off);
-    final tip = _n(land) + _n(lht) + _n(slh) + _n(clr);
-    final y = tip - _n(foot);
-    if (w <= 0 || r <= 0 || x <= 0 || y <= 0) {
-      setState(() => out = [
-            const _R('Load, radius aur heights sahi daalo', 3)
-          ],
-      );
-      return;
-    }
-    final boom = math.sqrt(x * x + y * y);
-    final angle = _deg(math.atan2(y, x));
-    final total = w + rg;
-    final cap = _n(chart);
-    final res = <_R>[
-      _R('Boom tip height chahiye: ${_f(tip)} m'),
-      _R('Minimum boom length: ${_f(boom)} m'),
-      _R('Boom angle: ${_f(angle, 1)} deg',
-          (angle < 30 || angle > 80) ? 2 : 1),
-      _R('Total hook load: ${_f(total)} ton (load + rigging + block)'),
-    ];
-    if (angle < 30) {
-      res.add(const _R('Boom angle kam hai: chart me allowed hai ya nahi dekho', 2),
-      );
-    }
-    if (angle > 80) {
-      res.add(const _R('Boom angle bahut zyada: peeche girne ka risk', 3));
-    }
-    if (cap > 0) {
-      final u = total / cap * 100;
-      final lv = u <= 75 ? 1 : (u <= 85 ? 2 : 3);
-      res.add(_R(
-          'Chart capacity ${_f(cap)} ton par utilization: ${_f(u, 0)}%', lv),
-      );
-      if (u > 100) {
-        res.add(const _R('OVERLOAD: ye lift mat karo', 3));
-      } else if (u > 85) {
-        res.add(const _R(
-            '85% se upar: critical lift, engineer aur lift plan zaruri', 3,
-          ),
-        );
-      } else if (u > 75) {
-        res.add(const _R('75-85%: savdhani, critical lift check karo', 2));
-      } else {
-        res.add(const _R('75% ke andar: theek', 1));
-      }
-    } else {
-      res.add(const _R(
-          'Load chart se is radius aur boom length ki capacity daalke utilization check karo',
-          2,
-        ),
-      );
-    }
-    setState(() => out = res);
-  }
-
-  @override
-  void dispose() {
-    load.dispose();
-    rig.dispose();
-    rad.dispose();
-    land.dispose();
-    lht.dispose();
-    slh.dispose();
-    clr.dispose();
-    off.dispose();
-    foot.dispose();
-    chart.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _page('Crane Boom & Capacity', [
-      _field(load, 'Load weight', suffix: 'ton'),
-      _field(rig, 'Rigging + hook block weight', suffix: 'ton'),
-      _field(rad, 'Working radius (slew centre se load tak)', suffix: 'm'),
-      _field(land, 'Load ko kitni oonchai par rakhna hai', suffix: 'm'),
-      _field(lht, 'Load ki apni height', suffix: 'm'),
-      _field(slh, 'Sling height (hook se load top tak)', suffix: 'm'),
-      _field(clr, 'Boom tip se hook tak clearance', suffix: 'm'),
-      _field(off, 'Boom foot offset (slew centre se)', suffix: 'm'),
-      _field(foot, 'Boom foot height (ground se)', suffix: 'm'),
-      _field(chart, 'Load chart capacity (optional)', suffix: 'ton'),
-      ElevatedButton(onPressed: calc, child: const Text('Calculate')),
-      _results(out),
-      _note(
-          'Ye geometry se minimum boom length hai. Chart me agli available boom length lo aur wahi ki capacity daalo. Jib, boom bend aur outrigger setting shamil nahi.',
+        'Container: 12 m x 2.44 m, 4 leg. Pipe: 2 leg, length = dono sling points ke beech doori. Wire rope size rule: WLL = d x d / 100 ton (estimate).',
       ),
       _note(_disclaimer),
     ]);
@@ -426,18 +351,19 @@ class _WindCheckScreenState extends State<WindCheckScreen> {
       final sway = _deg(math.atan(kgf / (w * 1000)));
       res.add(_R('Load par wind force: ${_f(kgf, 0)} kgf'));
       res.add(_R('Load weight ka ${_f(pct, 1)}%'));
-      res.add(_R('Load ka sway angle approx: ${_f(sway, 1)} deg',
-          pct > 10 ? 2 : 1),
+      res.add(
+        _R('Load ka sway angle approx: ${_f(sway, 1)} deg', pct > 10 ? 2 : 1),
       );
       if (pct > 10) {
-        res.add(const _R(
-            'Wind force zyada: load jhulega, radius badh sakta hai. Tag line zaruri', 2,
+        res.add(
+          const _R(
+            'Wind force zyada: load jhulega, radius badh sakta hai. Tag line zaruri',
+            2,
           ),
         );
       }
     } else {
-      res.add(const _R(
-          'Wind force ke liye load area aur weight bhi daalo', 2));
+      res.add(const _R('Wind force ke liye load area aur weight bhi daalo', 2));
     }
     setState(() => out = res);
   }
@@ -461,7 +387,7 @@ class _WindCheckScreenState extends State<WindCheckScreen> {
       ElevatedButton(onPressed: calc, child: const Text('Check')),
       _results(out),
       _note(
-          'Force = 0.5 x 1.225 x v x v x Cd x Area. Gust isse zyada ho sakta hai, isliye margin rakho.',
+        'Force = 0.5 x 1.225 x v x v x Cd x Area. Gust isse zyada ho sakta hai, isliye margin rakho.',
       ),
       _note(_disclaimer),
     ]);
@@ -494,9 +420,11 @@ class _CgShareScreenState extends State<CgShareScreen> {
       return;
     }
     if (x <= 0 || x >= s) {
-      setState(() => out = [
-            const _R(
-                'CG dono lifting points ke beech me nahi hai: load palat sakta hai. Points badlo', 3,
+      setState(
+        () => out = [
+          const _R(
+            'CG dono lifting points ke beech me nahi hai: load palat sakta hai. Points badlo',
+            3,
           ),
         ],
       );
@@ -521,11 +449,13 @@ class _CgShareScreenState extends State<CgShareScreen> {
     final tB = rb / math.sin(aB);
     final lA = math.sqrt(x * x + h * h);
     final lB = math.sqrt((s - x) * (s - x) + h * h);
-    setState(() => out = [
-          _R('Point A par load: ${_f(ra)} ton'),
-          _R('Point B par load: ${_f(rb)} ton'),
-          _R('Sling A: ${_f(lA)} m, angle ${_f(_deg(aA), 1)} deg, tension ${_f(tA)} ton',
-              _lv(aA),
+    setState(
+      () => out = [
+        _R('Point A par load: ${_f(ra)} ton'),
+        _R('Point B par load: ${_f(rb)} ton'),
+        _R(
+          'Sling A: ${_f(lA)} m, angle ${_f(_deg(aA), 1)} deg, tension ${_f(tA)} ton',
+          _lv(aA),
         ),
         _R(
           'Sling B: ${_f(lB)} m, angle ${_f(_deg(aB), 1)} deg, tension ${_f(tB)} ton',
@@ -557,7 +487,7 @@ class _CgShareScreenState extends State<CgShareScreen> {
       ElevatedButton(onPressed: calc, child: const Text('Calculate')),
       _results(out),
       _note(
-          'CG jis point ke paas ho, us par zyada load aur us sling ki tension zyada. Dono sling ki tension ke hisaab se size lo.',
+        'CG jis point ke paas ho, us par zyada load aur us sling ki tension zyada. Dono sling ki tension ke hisaab se size lo.',
       ),
       _note(_disclaimer),
     ]);

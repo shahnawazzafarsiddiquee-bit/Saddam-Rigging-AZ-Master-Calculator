@@ -59,6 +59,11 @@ android {
     }
 
     signingConfigs {
+        debug {
+            // Pin the repository's existing sideload identity explicitly. SDK
+            // environment variables may redirect the default debug-key path.
+            storeFile rootProject.file("keystore/fixed_debug.p12")
+        }
         release {
             if (keystorePropertiesFile.exists()) {
                 keyAlias keystoreProperties["keyAlias"]

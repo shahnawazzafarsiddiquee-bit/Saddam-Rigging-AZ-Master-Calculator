@@ -179,15 +179,21 @@ class _SyntheticSlingScreenState extends State<SyntheticSlingScreen> {
     cg,
   ];
 
+  final Map<TextEditingController, String> _lastText = {};
+
   @override
   void initState() {
     super.initState();
     for (final c in _controllers) {
+      _lastText[c] = c.text;
       c.addListener(_invalidate);
     }
   }
 
   void _invalidate() {
+    // Cursor/focus selection changes do not alter calculation inputs.
+    if (!_controllers.any((c) => _lastText[c] != c.text)) return;
+    for (final c in _controllers) { _lastText[c] = c.text; }
     setState(() {
       result = null;
       error = null;

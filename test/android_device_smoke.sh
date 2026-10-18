@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 package_id=com.saddam.rigging.azmaster
 mkdir -p device-evidence fixtures after-update
+capture_failure() {
+  echo 'Android verification failed; preserving activity, screenshot and log evidence.' >&2
+  adb shell dumpsys activity activities > device-evidence/failure-activities.txt || true
+  adb logcat -d > device-evidence/failure-logcat.txt || true
+  adb exec-out screencap -p > device-evidence/failure-screen.png || true
+}
+trap capture_failure ERR
 python test/device_fixture.py create fixtures
 adb install -r artifacts/baseline/app-debug.apk
 adb shell run-as "$package_id" mkdir -p databases
@@ -14,10 +21,15 @@ launch_and_capture() {
   adb shell monkey -p "$package_id" -c android.intent.category.LAUNCHER 1 > "device-evidence/$label-launch.txt"
   foreground=0
   for attempt in $(seq 1 20); do
-    if adb shell dumpsys activity activities | grep -E "mResumedActivity.*$package_id" > /dev/null; then foreground=1; break; fi
+    adb shell dumpsys activity activities > "device-evidence/$label-activities.txt"
+    if grep -E "(mResumedActivity|topResumedActivity|ResumedActivity).*$package_id" "device-evidence/$label-activities.txt" > /dev/null; then foreground=1; break; fi
     sleep 1
   done
-  test "$foreground" = 1
+  if [ "$foreground" != 1 ]; then
+    cat "device-evidence/$label-activities.txt"
+    echo "Application did not become resumed: $label" >&2
+    return 1
+  fi
   sleep 4
   adb shell pidof "$package_id" > "device-evidence/$label-pid.txt"
   test -s "device-evidence/$label-pid.txt"

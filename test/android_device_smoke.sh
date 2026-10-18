@@ -54,6 +54,15 @@ launch_and_capture() {
     return 1
   fi
   adb exec-out screencap -p > "device-evidence/$label-dashboard.png"
+  if [ "${VERIFY_VISIBLE_DASHBOARD:-0}" = 1 ]; then
+    drawn=0
+    for attempt in $(seq 1 20); do
+      if python test/verify_android_png.py --require-app-header "device-evidence/$label-dashboard.png" > "device-evidence/$label-png-check.txt" 2>&1; then drawn=1; break; fi
+      sleep 1
+      adb exec-out screencap -p > "device-evidence/$label-dashboard.png"
+    done
+    if [ "$drawn" != 1 ]; then cat "device-evidence/$label-png-check.txt"; return 1; fi
+  fi
   adb shell am force-stop "$package_id"
 }
 launch_and_capture baseline
@@ -89,10 +98,12 @@ s=re.sub(r'(?m)^(version:\s*[^+\n]+)\+\d+',lambda m:m.group(1)+'+'+os.environ['A
 p.write_text(s)
 PY
 flutter pub get
-flutter test "${INTEGRATION_TARGET:-integration_test/android_backup_test.dart}" -d emulator-5554 --reporter expanded 2>&1 | tee device-evidence/native-backup-tests.txt
 if [ "${VERIFY_VISIBLE_DASHBOARD:-0}" = 1 ]; then
-  for name in verified-dashboard verified-equipment verified-synthetic; do
-    adb exec-out run-as "$package_id" cat "app_flutter/$name.png" > "device-evidence/$name.png"
-    test -s "device-evidence/$name.png"
-  done
+  # Official host-side screenshot callback saves PNG bytes before the test app
+  # is cleaned up. Never treat a non-empty adb error message as an image.
+  flutter drive --driver=test/android_visual_driver.dart --target="$INTEGRATION_TARGET" -d emulator-5554 2>&1 | tee device-evidence/native-backup-tests.txt
+  python test/verify_android_png.py device-evidence/verified-dashboard.png device-evidence/verified-equipment.png device-evidence/verified-synthetic.png
+  echo 'PASS: all three rendered screenshots were exported as validated PNG images.'
+else
+  flutter test "${INTEGRATION_TARGET:-integration_test/android_backup_test.dart}" -d emulator-5554 --reporter expanded 2>&1 | tee device-evidence/native-backup-tests.txt
 fi

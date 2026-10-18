@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../models/equipment_model.dart';
 import 'backup_service.dart';
+import 'environment_repository.dart';
 
 /// Checklist prompts, not manufacturer acceptance/retirement limits.
 class InspectionRules {
@@ -148,6 +149,7 @@ class InspectionWorkflow {
     required String notes,
     required bool attested,
     required List<Uint8List> photos,
+    Map<String, Object?>? environment,
   }) => BackupService.withDatabases(
     (db) => saveTo(
       db,
@@ -161,6 +163,7 @@ class InspectionWorkflow {
       notes: notes,
       attested: attested,
       photos: photos,
+      environment: environment,
     ),
   );
 
@@ -176,6 +179,7 @@ class InspectionWorkflow {
     required String notes,
     required bool attested,
     required List<Uint8List> photos,
+    Map<String, Object?>? environment,
     DateTime? now,
   }) async {
     if ([assetId, inspector, project, procedure].any((s) => s.trim().isEmpty) ||
@@ -205,6 +209,11 @@ class InspectionWorkflow {
     }
     final timestamp = (now ?? DateTime.now()).toUtc().toIso8601String();
     return db.transaction((tx) async {
+      final attachedEnvironment = await EnvironmentRepository.resolveAttachment(
+        tx,
+        environment,
+        project,
+      );
       final rows = await tx.query(
         'Equipment',
         where: 'equipmentId = ?',
@@ -227,6 +236,7 @@ class InspectionWorkflow {
           'method': 'Offline typed attestation; identity not authenticated',
         },
         'equipmentRowId': asset.id,
+        'environment': attachedEnvironment,
       };
       final lines = <String>[
         for (var i = 0; i < InspectionRules.checklists[kind]!.length; i++)

@@ -4,6 +4,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../models/equipment_model.dart';
 import 'backup_service.dart';
+import 'environment_repository.dart';
 
 class LiftEquipmentService {
   static String? blockedReason(
@@ -37,14 +38,20 @@ class LiftEquipmentService {
             .toList();
       });
 
-  static Future<int> save(Map<String, Object?> row, Set<int> equipmentIds) =>
-      BackupService.withDatabases((db) => saveTo(db, row, equipmentIds));
+  static Future<int> save(
+    Map<String, Object?> row,
+    Set<int> equipmentIds, {
+    Map<String, Object?>? environment,
+  }) => BackupService.withDatabases(
+    (db) => saveTo(db, row, equipmentIds, environment: environment),
+  );
 
   static Future<int> saveTo(
     Database db,
     Map<String, Object?> row,
     Set<int> equipmentIds, {
     DateTime? now,
+    Map<String, Object?>? environment,
   }) async {
     final time = now ?? DateTime.now();
     final weight = row['loadWeight'];
@@ -57,6 +64,11 @@ class LiftEquipmentService {
       );
     }
     return db.transaction((tx) async {
+      final attachedEnvironment = await EnvironmentRepository.resolveAttachment(
+        tx,
+        environment,
+        '${row['projectName']}',
+      );
       final certs = await tx.rawQuery('SELECT * FROM pro.certs');
       final snapshots = <Map<String, Object?>>[];
       for (final id in equipmentIds) {
@@ -80,6 +92,7 @@ class LiftEquipmentService {
           'version': 1,
           'liftId': liftId,
           'equipment': snapshots,
+          'environment': attachedEnvironment,
           'status': 'DRAFT - COMPETENT PERSON REVIEW REQUIRED',
           'certificateDocumentVerificationRequired': true,
         }),

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -25,11 +26,15 @@ class PdfService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text('SADDAM RIGGING A-Z MASTER CALCULATOR',
-            style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+        pw.Text(
+          'SADDAM RIGGING A-Z MASTER CALCULATOR',
+          style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+        ),
         pw.SizedBox(height: 4),
-        pw.Text(title,
-            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+        pw.Text(
+          title,
+          style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+        ),
         pw.Divider(thickness: 1.5),
       ],
     );
@@ -40,8 +45,19 @@ class PdfService {
       padding: const pw.EdgeInsets.symmetric(vertical: 3),
       child: pw.Row(
         children: [
-          pw.SizedBox(width: 170, child: pw.Text(k, style: const pw.TextStyle(color: PdfColors.grey700))),
-          pw.Expanded(child: pw.Text(v, style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+          pw.SizedBox(
+            width: 170,
+            child: pw.Text(
+              k,
+              style: const pw.TextStyle(color: PdfColors.grey700),
+            ),
+          ),
+          pw.Expanded(
+            child: pw.Text(
+              v,
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+          ),
         ],
       ),
     );
@@ -62,17 +78,28 @@ class PdfService {
           children: [
             _header('$calculatorName Report'),
             pw.SizedBox(height: 12),
-            pw.Text('Inputs', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+            pw.Text(
+              'Inputs',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+            ),
             ...inputs.entries.map((e) => _kv(e.key, e.value)),
             pw.SizedBox(height: 16),
-            pw.Text('Results', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+            pw.Text(
+              'Results',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+            ),
             ...results.entries.map((e) => _kv(e.key, e.value)),
             pw.SizedBox(height: 16),
             pw.Container(
               padding: const pw.EdgeInsets.all(10),
               decoration: pw.BoxDecoration(border: pw.Border.all(width: 1.5)),
-              child: pw.Text('STATUS: $verdict',
-                  style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+              child: pw.Text(
+                'STATUS: $verdict',
+                style: pw.TextStyle(
+                  fontSize: 16,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -106,38 +133,62 @@ class PdfService {
           _kv('Location', location),
           _kv('Date', date),
           pw.SizedBox(height: 12),
-          pw.Text('Load Details', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+          pw.Text(
+            'Load Details',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+          ),
           _kv('Description', loadDescription),
           _kv('Weight', loadWeight),
           pw.SizedBox(height: 12),
-          pw.Text('Crane Details', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+          pw.Text(
+            'Crane Details',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+          ),
           pw.Text(craneDetails),
           pw.SizedBox(height: 12),
-          pw.Text('Rigging Arrangement', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+          pw.Text(
+            'Rigging Arrangement',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+          ),
           pw.Text(riggingArrangement),
           pw.SizedBox(height: 12),
-          pw.Text('Lifting Sequence', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+          pw.Text(
+            'Lifting Sequence',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+          ),
           pw.Text(liftingSequence),
           pw.SizedBox(height: 12),
-          pw.Text('Personnel & Responsibilities', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+          pw.Text(
+            'Personnel & Responsibilities',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+          ),
           pw.Text(personnel),
           pw.SizedBox(height: 12),
-          pw.Text('Safety Requirements', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+          pw.Text(
+            'Safety Requirements',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+          ),
           pw.Text(safetyRequirements),
           pw.SizedBox(height: 24),
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-                pw.Text('Prepared By: ____________________'),
-                pw.SizedBox(height: 20),
-                pw.Text('Date: ____________________'),
-              ]),
-              pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-                pw.Text('Approved By: ____________________'),
-                pw.SizedBox(height: 20),
-                pw.Text('Date: ____________________'),
-              ]),
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('Prepared By: ____________________'),
+                  pw.SizedBox(height: 20),
+                  pw.Text('Date: ____________________'),
+                ],
+              ),
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('Approved By: ____________________'),
+                  pw.SizedBox(height: 20),
+                  pw.Text('Date: ____________________'),
+                ],
+              ),
             ],
           ),
         ],
@@ -149,6 +200,8 @@ class PdfService {
   static Future<File> generateJsaPdf({
     required String activity,
     required List<Map<String, String>> steps, // step, hazard, risk, control
+    String? environmentSummary,
+    String? project,
   }) async {
     final doc = pw.Document();
     doc.addPage(
@@ -158,14 +211,29 @@ class PdfService {
           _header('Job Safety Analysis (JSA)'),
           pw.SizedBox(height: 8),
           _kv('Activity', activity),
+          if (project != null) _kv('Project / site', project),
+          if (environmentSummary != null)
+            _kv('Environment snapshot', environmentSummary),
           pw.SizedBox(height: 12),
           pw.Table.fromTextArray(
             headers: ['Work Step', 'Hazard', 'Risk', 'Control Measure'],
             data: steps
-                .map((s) => [s['step'] ?? '', s['hazard'] ?? '', s['risk'] ?? '', s['control'] ?? ''])
+                .map(
+                  (s) => [
+                    s['step'] ?? '',
+                    s['hazard'] ?? '',
+                    s['risk'] ?? '',
+                    s['control'] ?? '',
+                  ],
+                )
                 .toList(),
-            headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
-            headerDecoration: const pw.BoxDecoration(color: PdfColors.blueGrey800),
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.white,
+            ),
+            headerDecoration: const pw.BoxDecoration(
+              color: PdfColors.blueGrey800,
+            ),
             cellAlignment: pw.Alignment.centerLeft,
             cellPadding: const pw.EdgeInsets.all(6),
           ),
@@ -198,7 +266,10 @@ class PdfService {
             _kv('Date', date),
             _kv('Result', result),
             pw.SizedBox(height: 12),
-            pw.Text('Remarks', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+              'Remarks',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
             pw.Text(remarks),
           ],
         ),

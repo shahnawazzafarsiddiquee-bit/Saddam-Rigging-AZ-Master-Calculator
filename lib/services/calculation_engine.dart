@@ -178,6 +178,65 @@ class CalculationEngine {
     );
   }
 
+  /// The configuration factor is entered from the actual manufacturer's chart,
+  /// referenced to the marked straight WLL of one sling. It already includes
+  /// hitch, installed legs and angle: never apply the angle factor twice.
+  static CalculationResult syntheticSling({
+    required double loadKg,
+    required double markedWllKg,
+    required double configurationFactor,
+    required int effectiveLegs,
+    required double angleDegrees,
+    AngleConvention convention = AngleConvention.horizontal,
+    required String configurationSource,
+    bool tagAndConfigurationVerified = false,
+    bool environmentAndGeometryVerified = false,
+    bool sharpEdge = false,
+    bool suitableProtectionVerified = false,
+    bool damageFound = false,
+  }) {
+    finite(markedWllKg, 'Marked straight WLL', positive: true);
+    finite(configurationFactor, 'Manufacturer configuration factor', positive: true);
+    final geometry = sling(loadKg: loadKg, effectiveLegs: effectiveLegs,
+        angleDegrees: angleDegrees, convention: convention);
+    final capacityKg = _checked(markedWllKg * configurationFactor);
+    final requiredMarkedWllKg = _checked(loadKg / configurationFactor);
+    final utilization = _checked(loadKg / capacityKg * 100);
+    final blocked = damageFound || (sharpEdge && !suitableProtectionVerified);
+    final verified = tagAndConfigurationVerified &&
+        configurationSource.trim().isNotEmpty && environmentAndGeometryVerified;
+    return CalculationResult(
+      inputs: {...geometry.inputs, 'markedWllKg': markedWllKg,
+        'configurationFactor': configurationFactor},
+      values: {...geometry.values, 'configurationCapacityKg': capacityKg,
+        'requiredMarkedWllKg': requiredMarkedWllKg,
+        'utilizationPercent': utilization},
+      units: {...geometry.units, 'markedWllKg': 'kg',
+        'configurationCapacityKg': 'kg', 'requiredMarkedWllKg': 'kg'},
+      method: 'Assembly capacity = marked straight WLL × manufacturer configuration factor; utilization = load / assembly capacity × 100. Leg tension is a separate symmetric geometry estimate.',
+      source: configurationSource.trim().isEmpty
+          ? 'Manufacturer configuration source missing' : configurationSource,
+      sourceType: ValueSource.manufacturer,
+      assumptions: const [
+        'Entered factor applies to the complete selected arrangement, actual angle, material and sling model; it is not inferred from colour.',
+        'No second angle or leg multiplier is applied to the assembly rating.',
+        'Leg tension assumes verified symmetric equal sharing and known effective legs; unequal CG needs a separate engineered distribution.',
+      ],
+      warnings: [
+        if (!verified) 'VERIFY TAG / CERTIFICATE, manufacturer chart revision, environment and actual geometry.',
+        if (damageFound) 'REJECT / HOLD: damage or missing identification recorded. Remove from use for inspection.',
+        if (sharpEdge && !suitableProtectionVerified) 'Sharp edge: suitable manufacturer-approved protection must be verified before use.',
+        if (geometry.values['horizontalDegrees']! < 30) 'Very low sling angle: competent-person review required.',
+        'Body colour and inspection-period colour are separate records; neither proves WLL.',
+        'This calculation does not approve a lift or replace a formal equipment inspection.',
+      ],
+      status: blocked || utilization > 100 ? CheckStatus.notAcceptable
+          : !verified ? CheckStatus.incomplete
+          : geometry.values['horizontalDegrees']! < 30
+          ? CheckStatus.reviewRequired : CheckStatus.acceptable,
+    );
+  }
+
   static CalculationResult craneUtilization({
     required double grossKg,
     required double capacityKg,

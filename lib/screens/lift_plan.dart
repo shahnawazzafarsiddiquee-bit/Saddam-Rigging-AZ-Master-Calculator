@@ -4,6 +4,8 @@ import 'package:printing/printing.dart';
 
 import '../database/sqlite_helper.dart';
 import '../services/pdf_service.dart';
+import '../services/lift_equipment_service.dart';
+import '../models/equipment_model.dart';
 
 class LiftPlanScreen extends StatefulWidget {
   const LiftPlanScreen({super.key});
@@ -28,6 +30,14 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
   final _safetyCtrl = TextEditingController();
 
   bool _saving = false;
+  final Set<int> _selectedAssets = {};
+  late Future<List<EquipmentModel>> _eligibleAssets;
+  @override
+  void initState() {
+    super.initState();
+    _eligibleAssets = LiftEquipmentService.eligible();
+  }
+
   String? _weightError;
 
   Future<void> _pickDate() async {
@@ -63,7 +73,14 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
     setState(() => _weightError = null);
     setState(() => _saving = true);
     try {
-      await SqliteHelper.instance.insert('LiftPlans', {
+      final assets = await _eligibleAssets;
+      final selectedText = assets
+          .where((a) => _selectedAssets.contains(a.id))
+          .map((a) => a.equipmentId)
+          .join(', ');
+      final riggingText =
+          '${_riggingCtrl.text}\nRegistered equipment: $selectedText\nDRAFT - COMPETENT PERSON REVIEW REQUIRED';
+      await LiftEquipmentService.save({
         'projectName': _projectCtrl.text,
         'client': _clientCtrl.text,
         'location': _locationCtrl.text,
@@ -71,11 +88,11 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
         'loadDescription': _loadDescCtrl.text,
         'loadWeight': loadWeight,
         'craneDetails': _craneDetailsCtrl.text,
-        'riggingArrangement': _riggingCtrl.text,
+        'riggingArrangement': riggingText,
         'liftingSequence': _sequenceCtrl.text,
         'personnel': _personnelCtrl.text,
         'safetyRequirements': _safetyCtrl.text,
-      });
+      }, _selectedAssets);
 
       final file = await PdfService.generateLiftPlanPdf(
         projectName: _projectCtrl.text,
@@ -85,7 +102,7 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
         loadDescription: _loadDescCtrl.text,
         loadWeight: '${_loadWeightCtrl.text} t',
         craneDetails: _craneDetailsCtrl.text,
-        riggingArrangement: _riggingCtrl.text,
+        riggingArrangement: riggingText,
         liftingSequence: _sequenceCtrl.text,
         personnel: _personnelCtrl.text,
         safetyRequirements: _safetyCtrl.text,
@@ -187,6 +204,58 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
             ),
             _field(_craneDetailsCtrl, 'Crane Details', maxLines: 2),
             _field(_riggingCtrl, 'Rigging Arrangement', maxLines: 3),
+            ExpansionTile(
+              title: const Text('Select registered rigging equipment'),
+              subtitle: const Text(
+                'Expired, held, quarantined and uncertified assets are excluded. Selection rechecked on save.',
+              ),
+              children: [
+                FutureBuilder<List<EquipmentModel>>(
+                  future: _eligibleAssets,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError)
+                      return const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Text(
+                          'Equipment could not be loaded. Reopen this screen to retry.',
+                        ),
+                      );
+                    if (!snapshot.hasData)
+                      return const LinearProgressIndicator();
+                    if (snapshot.data!.isEmpty)
+                      return const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Text(
+                          'No eligible assets. Register an asset and link its exact equipment ID in Certificates.',
+                        ),
+                      );
+                    return Column(
+                      children: snapshot.data!
+                          .map(
+                            (a) => CheckboxListTile(
+                              title: Text(a.equipmentId),
+                              subtitle: Text('${a.type} | WLL ${a.wll} t'),
+                              value: _selectedAssets.contains(a.id),
+                              onChanged: _saving
+                                  ? null
+                                  : (v) => setState(() {
+                                      if (v == true) {
+                                        _selectedAssets.add(a.id!);
+                                      } else {
+                                        _selectedAssets.remove(a.id);
+                                      }
+                                    }),
+                            ),
+                          )
+                          .toList(),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const Text(
+              'DRAFT - selected equipment still requires physical fit, rating and certificate-document verification. Saving does not authorize lifting.',
+            ),
             _field(_sequenceCtrl, 'Lifting Sequence', maxLines: 4),
             _field(_personnelCtrl, 'Personnel & Responsibilities', maxLines: 2),
             _field(_safetyCtrl, 'Safety Requirements', maxLines: 3),

@@ -7,6 +7,7 @@ import '../app/theme.dart';
 import '../database/sqlite_helper.dart';
 import '../models/equipment_model.dart';
 import '../services/qr_service.dart';
+import 'rigging_pro2.dart';
 
 class EquipmentScreen extends StatefulWidget {
   const EquipmentScreen({super.key});
@@ -95,6 +96,33 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
               ResultRow(label: 'WLL', value: '${eq.wll} t'),
               ResultRow(label: 'Last Inspection', value: eq.inspectionDate),
               ResultRow(label: 'Expiry Date', value: eq.expiryDate),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.fact_check),
+                label: const Text('Inspect this equipment'),
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => InspectionScreen(assetId: eq.equipmentId),
+                    ),
+                  );
+                  if (mounted) _load();
+                },
+              ),
+              TextButton(
+                child: const Text('Inspection history'),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          InspectionHistoryScreen(assetId: eq.equipmentId),
+                    ),
+                  );
+                },
+              ),
               const SizedBox(height: 8),
               SafetyStatusBanner(
                 isSafe: eq.hasCurrentRegistration,

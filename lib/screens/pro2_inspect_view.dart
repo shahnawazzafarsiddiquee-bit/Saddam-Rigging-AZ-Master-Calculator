@@ -1,7 +1,9 @@
 part of 'rigging_pro2.dart';
 
 Future<void> _inspectionPdf(
-    Map<String, Object?> r, List<Uint8List> pics) async {
+  Map<String, Object?> r,
+  List<Uint8List> pics,
+) async {
   final rows = <List<String>>[];
   String note = '';
   for (final l in ((r['details'] as String?) ?? '').split('\n')) {
@@ -9,7 +11,16 @@ Future<void> _inspectionPdf(
     if (k < 0) continue;
     final tag = l.substring(0, k);
     final txt = l.substring(k + 1);
-    if (tag == 'NOTE') {
+    if (tag == 'META') {
+      final meta = InspectionWorkflow.metadata('META|$txt');
+      if (meta != null) {
+        rows.add(['Project', '${meta['project']}']);
+        rows.add(['Procedure', '${meta['procedure']}']);
+        rows.add(['N/A reason', '${meta['naReason']}']);
+        rows.add(['Attestation', '${meta['attestation']}']);
+        note = '${meta['notes']}';
+      }
+    } else if (tag == 'NOTE') {
       note = txt;
     } else {
       rows.add([tag, txt]);
@@ -17,69 +28,87 @@ Future<void> _inspectionPdf(
   }
   final who = ((r['inspector'] as String?) ?? '').trim();
   final doc = pw.Document();
-  doc.addPage(pw.MultiPage(
-    pageFormat: PdfPageFormat.a4,
-    margin: const pw.EdgeInsets.all(28),
-    build: (pw.Context ctx) => [
-      pw.Text('INSPECTION REPORT',
-          style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
-      pw.SizedBox(height: 6),
-      pw.Text('Item: ${r['item']}'),
-      pw.Text('Type: ${r['kind']}'),
-      pw.Text('Date: ${_dmy(r['dt'] as String)}'),
-      pw.Text('Inspector: ${who.isEmpty ? '-' : who}'),
-      pw.Text('Result: ${r['result']}',
-          style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-      pw.SizedBox(height: 10),
-      pw.Table(
-        border: pw.TableBorder.all(color: PdfColors.grey600, width: 0.5),
-        columnWidths: {
-          0: const pw.FlexColumnWidth(1),
-          1: const pw.FlexColumnWidth(5),
-        },
-        children: rows
-            .map((x) => pw.TableRow(children: [
-                  pw.Padding(
-                    padding: const pw.EdgeInsets.all(4),
-                    child: pw.Text(x[0],
-                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                  ),
-                  pw.Padding(
-                    padding: const pw.EdgeInsets.all(4),
-                    child: pw.Text(x[1]),
-                  ),
-                ]))
-            .toList(),
-      ),
-      if (note.isNotEmpty)
-        pw.Padding(
-            padding: const pw.EdgeInsets.only(top: 8),
-            child: pw.Text('Notes: $note')),
-      if (pics.isNotEmpty)
-        pw.Padding(
-          padding: const pw.EdgeInsets.only(top: 10),
-          child: pw.Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children:
-                pics.map((b) => pw.Image(pw.MemoryImage(b), width: 240)).toList(),
-          ),
+  doc.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.all(28),
+      build: (pw.Context ctx) => [
+        pw.Text(
+          'INSPECTION REPORT',
+          style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
         ),
-      pw.SizedBox(height: 30),
-      pw.Container(height: 0.5, color: PdfColors.black),
-      pw.Text('Inspector / Supervisor (Name / Sign / Date)'),
-    ],
-  ));
+        pw.SizedBox(height: 6),
+        pw.Text('Item: ${r['item']}'),
+        pw.Text('Type: ${r['kind']}'),
+        pw.Text('Date: ${_dmy(r['dt'] as String)}'),
+        pw.Text('Inspector: ${who.isEmpty ? '-' : who}'),
+        pw.Text(
+          'Result: ${r['result']}',
+          style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey600, width: 0.5),
+          columnWidths: {
+            0: const pw.FlexColumnWidth(1),
+            1: const pw.FlexColumnWidth(5),
+          },
+          children: rows
+              .map(
+                (x) => pw.TableRow(
+                  children: [
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.all(4),
+                      child: pw.Text(
+                        x[0],
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                      ),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.all(4),
+                      child: pw.Text(x[1]),
+                    ),
+                  ],
+                ),
+              )
+              .toList(),
+        ),
+        if (note.isNotEmpty)
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(top: 8),
+            child: pw.Text('Notes: $note'),
+          ),
+        if (pics.isNotEmpty)
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(top: 10),
+            child: pw.Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: pics
+                  .map((b) => pw.Image(pw.MemoryImage(b), width: 240))
+                  .toList(),
+            ),
+          ),
+        pw.SizedBox(height: 30),
+        pw.Container(height: 0.5, color: PdfColors.black),
+        pw.Text('Inspector / Supervisor (Name / Sign / Date)'),
+      ],
+    ),
+  );
   final bytes = await doc.save();
   await Printing.layoutPdf(
-      onLayout: (PdfPageFormat f) async => bytes, name: 'inspection_report');
+    onLayout: (PdfPageFormat f) async => bytes,
+    name: 'inspection_report',
+  );
 }
 
-Color _resColor(String r) =>
-    r == 'PASS' ? Colors.greenAccent : (r == 'FAIL' ? Colors.redAccent : Colors.orangeAccent);
+Color _resColor(String r) => r == 'PASS'
+    ? Colors.greenAccent
+    : ({'FAIL', 'REJECT'}.contains(r) ? Colors.redAccent : Colors.orangeAccent);
 
 class InspectionHistoryScreen extends StatefulWidget {
-  const InspectionHistoryScreen({super.key});
+  final String? assetId;
+  const InspectionHistoryScreen({super.key, this.assetId});
   @override
   State<InspectionHistoryScreen> createState() =>
       _InspectionHistoryScreenState();
@@ -99,7 +128,11 @@ class _InspectionHistoryScreenState extends State<InspectionHistoryScreen> {
     try {
       final r = await Pro2Db.inspections();
       if (!mounted) return;
-      setState(() => rows = r);
+      setState(
+        () => rows = widget.assetId == null
+            ? r
+            : r.where((row) => row['item'] == widget.assetId).toList(),
+      );
     } catch (e) {
       if (mounted) setState(() => err = 'Database error: $e');
     }
@@ -111,23 +144,30 @@ class _InspectionHistoryScreenState extends State<InspectionHistoryScreen> {
       if (err.isNotEmpty) _results([_R(err, 3)]),
       if (rows.isEmpty && err.isEmpty)
         _note('Abhi koi inspection save nahi hai.'),
-      ...rows.map((r) => Card(
-            child: ListTile(
-              title: Text('${r['item']}'),
-              subtitle: Text('${r['kind']} | ${_dmy(r['dt'] as String)}'),
-              trailing: Text('${r['result']}',
-                  style: TextStyle(
-                      color: _resColor(r['result'] as String),
-                      fontWeight: FontWeight.bold)),
-              onTap: () async {
-                await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => InspectionDetailScreen(row: r)));
-                _load();
-              },
+      ...rows.map(
+        (r) => Card(
+          child: ListTile(
+            title: Text('${r['item']}'),
+            subtitle: Text('${r['kind']} | ${_dmy(r['dt'] as String)}'),
+            trailing: Text(
+              '${r['result']}',
+              style: TextStyle(
+                color: _resColor(r['result'] as String),
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          )),
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => InspectionDetailScreen(row: r),
+                ),
+              );
+              _load();
+            },
+          ),
+        ),
+      ),
     ]);
   }
 }
@@ -164,11 +204,13 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
         content: const Text('Ye record aur uski photos delete hongi.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Nahi')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Nahi'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Haan, delete')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Haan, delete'),
+          ),
         ],
       ),
     );
@@ -187,27 +229,40 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
       final k = l.indexOf('|');
       if (k < 0) continue;
       final tag = l.substring(0, k);
-      final txt = l.substring(k + 1);
+      final raw = l.substring(k + 1);
+      final meta = tag == 'META' ? InspectionWorkflow.metadata(l) : null;
+      final txt = meta == null
+          ? raw
+          : 'Project: ${meta['project']}\nProcedure: ${meta['procedure']}\nN/A: ${meta['naReason']}\nNotes: ${meta['notes']}\nAttestation: ${meta['attestation']}';
       final c = tag == 'OK'
           ? Colors.greenAccent
           : (tag == 'FAIL'
-              ? Colors.redAccent
-              : (tag == 'NOTE' ? Colors.white : Colors.orangeAccent));
-      tiles.add(Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Text('$tag  $txt',
-            style: TextStyle(color: c, fontWeight: FontWeight.w600)),
-      ));
+                ? Colors.redAccent
+                : (tag == 'NOTE' ? Colors.white : Colors.orangeAccent));
+      tiles.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Text(
+            '$tag  $txt',
+            style: TextStyle(color: c, fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
     }
     return _page('Inspection', [
-      Text('${r['item']}',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      Text(
+        '${r['item']}',
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
       Text('${r['kind']} | ${_dmy(r['dt'] as String)}'),
       Text('Inspector: ${r['inspector']}'),
-      Text('Result: ${r['result']}',
-          style: TextStyle(
-              color: _resColor(r['result'] as String),
-              fontWeight: FontWeight.bold)),
+      Text(
+        'Result: ${r['result']}',
+        style: TextStyle(
+          color: _resColor(r['result'] as String),
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       const Divider(),
       ...tiles,
       if (pics.isNotEmpty) const SizedBox(height: 12),
@@ -215,11 +270,17 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
         spacing: 8,
         runSpacing: 8,
         children: pics
-            .map((p) => ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.memory(p,
-                      width: 150, height: 150, fit: BoxFit.cover),
-                ))
+            .map(
+              (p) => ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.memory(
+                  p,
+                  width: 150,
+                  height: 150,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            )
             .toList(),
       ),
       const SizedBox(height: 16),
@@ -228,7 +289,15 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
         icon: const Icon(Icons.picture_as_pdf),
         label: const Text('PDF report'),
       ),
-      TextButton(onPressed: _delete, child: const Text('Delete karo')),
+      if (InspectionWorkflow.metadata('${r['details'] ?? ''}') == null)
+        TextButton(
+          onPressed: _delete,
+          child: const Text('Delete legacy record'),
+        )
+      else
+        _note(
+          'Inspection and quarantine history retained. Corrections require a new inspection; previous evidence is not overwritten.',
+        ),
     ]);
   }
 }

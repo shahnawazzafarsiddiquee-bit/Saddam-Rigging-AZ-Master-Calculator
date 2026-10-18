@@ -1,12 +1,17 @@
 import 'dart:math' as math;
+
+import '../services/inspection_workflow.dart';
+
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+
 import 'pro2_db.dart';
 import 'rigging_pro_db.dart';
 
@@ -81,15 +86,19 @@ Widget _results(List<_R> rs) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: rs
-            .map((r) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(r.t,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: _col(r.lvl),
-                      )),
-                ))
+            .map(
+              (r) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  r.t,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _col(r.lvl),
+                  ),
+                ),
+              ),
+            )
             .toList(),
       ),
     ),

@@ -41,6 +41,12 @@ jobs:
           cp android/keystore/fixed_debug.p12 ~/.android/debug.keystore
       - name: Build current Android application
         run: flutter build apk --debug --build-number=${{ steps.version.outputs.code }}
+      - name: Verify fixed sideload signing certificate
+        run: |
+          signer=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --verbose --print-certs build/app/outputs/flutter-apk/app-debug.apk > build/apk-signature.txt
+          cat build/apk-signature.txt
+          grep -F 'df8356e1e772135b87347f1cb18cf2a6c66c01acba3f8a06ff6e66b646ae76ba' build/apk-signature.txt
       - uses: actions/upload-artifact@v4
         with:
           name: rigsafe-debug
@@ -50,7 +56,7 @@ jobs:
 
   android-device:
     if: contains(github.event.head_commit.message, '[device-check]')
-    needs: verify
+    needs: [verify, baseline-fixed-key]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -75,9 +81,7 @@ jobs:
           path: artifacts/current
       - uses: actions/download-artifact@v4
         with:
-          name: rigsafe-debug
-          run-id: 39051201748
-          github-token: ${{ github.token }}
+          name: rigsafe-baseline-fixed-key
           path: artifacts/baseline
       - name: Reuse existing test signing identity
         run: |
@@ -147,5 +151,46 @@ jobs:
         with:
           name: rigsafe-test-signed-packages
           path: packages/
+          if-no-files-found: error
+          retention-days: 30
+
+  baseline-fixed-key:
+    if: contains(github.event.head_commit.message, '[device-check]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: 9a1965f22c7529bb02d6225900353c5a0b873f1e
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.7'
+          cache: true
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
+      - name: Pin signing path for original source test build
+        run: |
+          python - <<'PYCODE'
+          from pathlib import Path
+          p=Path('android/app/build.gradle')
+          s=p.read_text()
+          old='    signingConfigs {\n'
+          assert old in s
+          s=s.replace(old,old+'        debug { storeFile rootProject.file("keystore/fixed_debug.p12") }\n',1)
+          p.write_text(s)
+          PYCODE
+      - run: flutter pub get
+      - name: Rebuild original application with stable test signing
+        run: flutter build apk --debug --build-number=1000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rigsafe-baseline-fixed-key
+          path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
           retention-days: 30

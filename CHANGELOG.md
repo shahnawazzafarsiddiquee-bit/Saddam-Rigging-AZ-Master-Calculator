@@ -20,8 +20,13 @@
   Generic material/chemical guidance no longer declares compatibility.
 - Fixed wire-rope dropdown and shared result-row phone-width overflows.
 
+- Legacy nullable equipment, duplicate IDs, invalid WLL/expiry and restricted-state edits are guarded.
+- Invalid lift weight is rejected inline before save/PDF; QR empty payloads and repeated scan callbacks are guarded.
+- Explicit fixed debug keystore path stabilizes future test builds; it cannot replace the original published signing key.
+
 ### Verification
-- Phase 2 checkpoint: static analysis, 82 tests and debug APK passed.
-- Further journal-mode, native Android update/backup and synthetic workflow
-  tests are being verified; consult TEST_REPORT.md for current evidence.
+- Build run 39092858778: analysis, 102 tests, debug/ARM64 APK and AAB passed.
+- Native 12-table same-key update and real SQLite restore/rollback passed.
+- Visual run 39095404794: rendered dashboard/equipment/synthetic screenshots passed.
 - No schema migration, production-device data deletion or main-branch merge.
+- Full enterprise scope remains pending; see docs/upgrade/FEATURE_MATRIX.md.

@@ -164,10 +164,10 @@ navigation and database schemas are retained. This is an incremental upgrade,
 not completion of every requested enterprise module.
 
 - Baseline APK build: Actions run 39051201748.
-- Verified calculation/backup checkpoint: run 39073629975, 82 tests and debug APK passed.
-- Additional real Android install/update and SQLite restore checks are under verification.
-- Synthetic/web/round sling upgrades add actual tag/configuration sources and
-  separate body/inspection-period colours; new tests are under verification.
+- Verified build run 39092858778: analysis, 102 tests, debug APK, ARM64 APK and test-signed AAB passed.
+- Native same-key 12-table update preservation and SQLite backup/rollback passed.
+- Visual run 39095404794 passed with actual Android dashboard/equipment/synthetic PNGs.
+- Synthetic tag/source gates and legacy equipment/restricted-status validation are tested.
 - The original official Critical Lift Plan PDF was not supplied and is not in
   the repository. Exact-template filling/visual matching is pending that file.
 - BLE, NFC, weather provider, roles, approvals and cloud sync are not configured.

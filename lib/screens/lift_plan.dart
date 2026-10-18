@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
+
 import '../database/sqlite_helper.dart';
 import '../services/pdf_service.dart';
 
@@ -15,7 +16,9 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
   final _projectCtrl = TextEditingController();
   final _clientCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
-  final _dateCtrl = TextEditingController(text: DateFormat('yyyy-MM-dd').format(DateTime.now()));
+  final _dateCtrl = TextEditingController(
+    text: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+  );
   final _loadDescCtrl = TextEditingController();
   final _loadWeightCtrl = TextEditingController();
   final _craneDetailsCtrl = TextEditingController();
@@ -46,6 +49,17 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
       return;
     }
 
+    final loadWeight = double.tryParse(
+      _loadWeightCtrl.text.trim().replaceAll(',', '.'),
+    );
+    if (loadWeight == null || !loadWeight.isFinite || loadWeight <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Load weight must be finite and greater than zero.'),
+        ),
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
       await SqliteHelper.instance.insert('LiftPlans', {
@@ -54,7 +68,7 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
         'location': _locationCtrl.text,
         'date': _dateCtrl.text,
         'loadDescription': _loadDescCtrl.text,
-        'loadWeight': double.tryParse(_loadWeightCtrl.text) ?? 0,
+        'loadWeight': loadWeight,
         'craneDetails': _craneDetailsCtrl.text,
         'riggingArrangement': _riggingCtrl.text,
         'liftingSequence': _sequenceCtrl.text,
@@ -84,7 +98,10 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
       });
 
       if (!mounted) return;
-      await Printing.sharePdf(bytes: await file.readAsBytes(), filename: file.path.split('/').last);
+      await Printing.sharePdf(
+        bytes: await file.readAsBytes(),
+        filename: file.path.split('/').last,
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -92,15 +109,40 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error generating lift plan: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error generating lift plan: $e')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
-  Widget _field(TextEditingController c, String label, {int maxLines = 1, TextInputType? type}) {
+  @override
+  void dispose() {
+    for (final c in [
+      _projectCtrl,
+      _clientCtrl,
+      _locationCtrl,
+      _dateCtrl,
+      _loadDescCtrl,
+      _loadWeightCtrl,
+      _craneDetailsCtrl,
+      _riggingCtrl,
+      _sequenceCtrl,
+      _personnelCtrl,
+      _safetyCtrl,
+    ]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Widget _field(
+    TextEditingController c,
+    String label, {
+    int maxLines = 1,
+    TextInputType? type,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
@@ -128,11 +170,18 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
               controller: _dateCtrl,
               readOnly: true,
               onTap: _pickDate,
-              decoration: const InputDecoration(labelText: 'Date', suffixIcon: Icon(Icons.calendar_today)),
+              decoration: const InputDecoration(
+                labelText: 'Date',
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
             ),
             const SizedBox(height: 12),
             _field(_loadDescCtrl, 'Load Description'),
-            _field(_loadWeightCtrl, 'Load Weight (t)', type: const TextInputType.numberWithOptions(decimal: true)),
+            _field(
+              _loadWeightCtrl,
+              'Load Weight (t)',
+              type: const TextInputType.numberWithOptions(decimal: true),
+            ),
             _field(_craneDetailsCtrl, 'Crane Details', maxLines: 2),
             _field(_riggingCtrl, 'Rigging Arrangement', maxLines: 3),
             _field(_sequenceCtrl, 'Lifting Sequence', maxLines: 4),
@@ -142,7 +191,11 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
             ElevatedButton.icon(
               onPressed: _saving ? null : _generate,
               icon: _saving
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.picture_as_pdf),
               label: Text(_saving ? 'GENERATING...' : 'SAVE & GENERATE PDF'),
             ),

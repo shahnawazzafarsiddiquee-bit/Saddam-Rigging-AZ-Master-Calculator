@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
 import '../app/theme.dart';
 import '../database/sqlite_helper.dart';
 import '../models/equipment_model.dart';
@@ -26,7 +27,11 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final rows = await SqliteHelper.instance.queryAll('Equipment', orderBy: 'id DESC');
+    final rows = await SqliteHelper.instance.queryAll(
+      'Equipment',
+      orderBy: 'id DESC',
+    );
+    if (!mounted) return;
     setState(() {
       _equipment = rows.map((r) => EquipmentModel.fromMap(r)).toList();
       _loading = false;
@@ -58,36 +63,50 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.cardGrey,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (_) => Padding(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(eq.type, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Center(
-              child: QrImageView(
-                data: QrService.buildPayload(eq.equipmentId),
-                size: 140,
-                backgroundColor: Colors.white,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                eq.type,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            ResultRow(label: 'Equipment ID', value: eq.equipmentId),
-            ResultRow(label: 'Serial Number', value: eq.serialNumber),
-            ResultRow(label: 'Manufacturer', value: eq.manufacturer),
-            ResultRow(label: 'WLL', value: '${eq.wll} t'),
-            ResultRow(label: 'Last Inspection', value: eq.inspectionDate),
-            ResultRow(label: 'Expiry Date', value: eq.expiryDate),
-            const SizedBox(height: 8),
-            SafetyStatusBanner(
-              isSafe: !eq.isExpired && eq.status == 'Active',
-              safeText: 'ACTIVE',
-              unsafeText: eq.isExpired ? 'EXPIRED' : eq.status.toUpperCase(),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Center(
+                child: QrImageView(
+                  data: QrService.buildPayload(eq.equipmentId),
+                  size: 140,
+                  backgroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ResultRow(label: 'Equipment ID', value: eq.equipmentId),
+              ResultRow(label: 'Serial Number', value: eq.serialNumber),
+              ResultRow(label: 'Manufacturer', value: eq.manufacturer),
+              ResultRow(label: 'WLL', value: '${eq.wll} t'),
+              ResultRow(label: 'Last Inspection', value: eq.inspectionDate),
+              ResultRow(label: 'Expiry Date', value: eq.expiryDate),
+              const SizedBox(height: 8),
+              SafetyStatusBanner(
+                isSafe: eq.hasCurrentRegistration,
+                safeText: 'REGISTRATION CURRENT - VERIFY CERTIFICATE',
+                unsafeText: eq.isExpired
+                    ? 'EXPIRED / DATE UNVERIFIED'
+                    : eq.isRestricted
+                    ? eq.status.toUpperCase()
+                    : 'INCOMPLETE - VERIFY REGISTRATION',
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -98,7 +117,9 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.cardGrey,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (_) => _EquipmentForm(existing: existing),
     );
     if (saved == true) _load();
@@ -110,7 +131,11 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
       appBar: AppBar(
         title: const Text('Equipment Management'),
         actions: [
-          IconButton(icon: const Icon(Icons.qr_code_scanner), onPressed: _scanQr, tooltip: 'Scan QR'),
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            onPressed: _scanQr,
+            tooltip: 'Scan QR',
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -121,40 +146,63 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _equipment.isEmpty
-              ? const Center(
-                  child: Text('No equipment yet. Tap + to add your first item.',
-                      style: TextStyle(color: Colors.white70)))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(14),
-                    itemCount: _equipment.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, i) {
-                      final eq = _equipment[i];
-                      final expired = eq.isExpired;
-                      return Card(
-                        child: ListTile(
-                          onTap: () => _showDetail(eq),
-                          onLongPress: () => _openForm(existing: eq),
-                          leading: CircleAvatar(
-                            backgroundColor: expired ? AppColors.danger : AppColors.success,
-                            child: const Icon(Icons.inventory_2, color: Colors.white),
-                          ),
-                          title: Text(eq.equipmentId, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text('${eq.type} • WLL ${eq.wll} t • ${eq.manufacturer}'),
-                          trailing: Text(
-                            expired ? 'EXPIRED' : eq.status,
-                            style: TextStyle(
-                              color: expired ? AppColors.danger : AppColors.success,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+          ? const Center(
+              child: Text(
+                'No equipment yet. Tap + to add your first item.',
+                style: TextStyle(color: Colors.white70),
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView.separated(
+                padding: const EdgeInsets.all(14),
+                itemCount: _equipment.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (context, i) {
+                  final eq = _equipment[i];
+                  final expired = eq.isExpired;
+                  final knownExpiry =
+                      EquipmentModel.validDate(eq.expiryDate) != null;
+                  final statusColor =
+                      eq.isRestricted || (knownExpiry && expired)
+                      ? AppColors.danger
+                      : eq.hasCurrentRegistration
+                      ? AppColors.success
+                      : AppColors.warning;
+                  return Card(
+                    child: ListTile(
+                      onTap: () => _showDetail(eq),
+                      onLongPress: () => _openForm(existing: eq),
+                      leading: CircleAvatar(
+                        backgroundColor: statusColor,
+                        child: const Icon(
+                          Icons.inventory_2,
+                          color: Colors.white,
                         ),
-                      );
-                    },
-                  ),
-                ),
+                      ),
+                      title: Text(
+                        eq.equipmentId,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        '${eq.type} • WLL ${eq.wll} t • ${eq.manufacturer}',
+                      ),
+                      trailing: Text(
+                        !knownExpiry
+                            ? 'DATE UNVERIFIED'
+                            : expired
+                            ? 'EXPIRED'
+                            : eq.status,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 }
@@ -176,6 +224,8 @@ class _EquipmentFormState extends State<_EquipmentForm> {
   late final TextEditingController _inspectionCtrl;
   late final TextEditingController _expiryCtrl;
   String _status = 'Active';
+  bool _saving = false;
+  String? _error;
 
   static const _types = [
     'Wire Rope Sling',
@@ -184,6 +234,10 @@ class _EquipmentFormState extends State<_EquipmentForm> {
     'Shackle',
     'Hook',
     'Spreader Beam',
+    'Round Sling',
+    'Master Link',
+    'Lifting Beam',
+    'Crane',
   ];
 
   @override
@@ -196,9 +250,15 @@ class _EquipmentFormState extends State<_EquipmentForm> {
     _manufacturerCtrl = TextEditingController(text: e?.manufacturer ?? '');
     _wllCtrl = TextEditingController(text: e?.wll.toString() ?? '');
     _inspectionCtrl = TextEditingController(
-        text: e?.inspectionDate ?? DateFormat('yyyy-MM-dd').format(DateTime.now()));
+      text:
+          e?.inspectionDate ?? DateFormat('yyyy-MM-dd').format(DateTime.now()),
+    );
     _expiryCtrl = TextEditingController(
-        text: e?.expiryDate ?? DateFormat('yyyy-MM-dd').format(DateTime.now().add(const Duration(days: 365))));
+      text:
+          e?.expiryDate ??
+          DateFormat('yyyy-MM-dd')
+              .format(DateTime.now().add(const Duration(days: 365))),
+    );
     _status = e?.status ?? 'Active';
   }
 
@@ -209,35 +269,92 @@ class _EquipmentFormState extends State<_EquipmentForm> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-    if (picked != null) setState(() => c.text = DateFormat('yyyy-MM-dd').format(picked));
+    if (picked != null)
+      setState(() => c.text = DateFormat('yyyy-MM-dd').format(picked));
   }
 
   Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _error = null);
     if (_idCtrl.text.trim().isEmpty || _wllCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Equipment ID and WLL are required.')),
-      );
+      setState(() => _error = 'Equipment ID and WLL are required.');
       return;
     }
 
+    final wll = double.tryParse(_wllCtrl.text.trim().replaceAll(',', '.'));
+    if (wll == null || !wll.isFinite || wll <= 0) {
+      setState(() => _error = 'WLL must be finite and greater than zero.');
+      return;
+    }
+    if (widget.existing?.isRestricted == true &&
+        !EquipmentModel.restrictedStatus(_status)) {
+      setState(
+        () => _error = 'Restricted equipment needs an authorized release workflow. Keep it on hold.',
+      );
+      return;
+    }
     final row = {
       'equipmentId': _idCtrl.text.trim(),
       'type': _typeCtrl.text,
       'serialNumber': _serialCtrl.text,
       'manufacturer': _manufacturerCtrl.text,
-      'wll': double.tryParse(_wllCtrl.text) ?? 0,
+      'wll': wll,
       'inspectionDate': _inspectionCtrl.text,
       'expiryDate': _expiryCtrl.text,
       'status': _status,
     };
 
-    if (widget.existing?.id != null) {
-      await SqliteHelper.instance.update('Equipment', row, widget.existing!.id!);
-    } else {
-      await SqliteHelper.instance.insert('Equipment', row);
+    setState(() => _saving = true);
+    try {
+      final db = await SqliteHelper.instance.database;
+      await db.transaction((txn) async {
+        final duplicate = await txn.query(
+          'Equipment',
+          columns: ['id'],
+          where: 'equipmentId = ? AND id != ?',
+          whereArgs: [row['equipmentId'], widget.existing?.id ?? -1],
+        );
+        if (duplicate.isNotEmpty)
+          throw StateError(
+            'Equipment ID already exists. Use a unique ID for QR tracking.',
+          );
+        if (widget.existing?.id != null) {
+          final updated = await txn.update(
+            'Equipment',
+            row,
+            where: 'id = ?',
+            whereArgs: [widget.existing!.id],
+          );
+          if (updated != 1)
+            throw StateError(
+              'Equipment record changed or is missing. Refresh and retry.',
+            );
+        } else {
+          await txn.insert('Equipment', row);
+        }
+      });
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Equipment not saved: $e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
+  }
 
-    if (mounted) Navigator.pop(context, true);
+  @override
+  void dispose() {
+    for (final c in [
+      _idCtrl,
+      _typeCtrl,
+      _serialCtrl,
+      _manufacturerCtrl,
+      _wllCtrl,
+      _inspectionCtrl,
+      _expiryCtrl,
+    ]) {
+      c.dispose();
+    }
+    super.dispose();
   }
 
   @override
@@ -253,26 +370,44 @@ class _EquipmentFormState extends State<_EquipmentForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(widget.existing == null ? 'Add Equipment' : 'Edit Equipment',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              widget.existing == null ? 'Add Equipment' : 'Edit Equipment',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 14),
-            TextField(controller: _idCtrl, decoration: const InputDecoration(labelText: 'Equipment ID')),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              value: _types.contains(_typeCtrl.text) ? _typeCtrl.text : _types.first,
-              decoration: const InputDecoration(labelText: 'Type'),
-              dropdownColor: const Color(0xFF2A2E33),
-              items: _types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-              onChanged: (v) => setState(() => _typeCtrl.text = v ?? _types.first),
+            TextField(
+              controller: _idCtrl,
+              decoration: const InputDecoration(labelText: 'Equipment ID'),
             ),
             const SizedBox(height: 10),
-            TextField(controller: _serialCtrl, decoration: const InputDecoration(labelText: 'Serial Number')),
+            DropdownButtonFormField<String>(
+              value: _types.contains(_typeCtrl.text)
+                  ? _typeCtrl.text
+                  : _types.first,
+              decoration: const InputDecoration(labelText: 'Type'),
+              dropdownColor: const Color(0xFF2A2E33),
+              items: _types
+                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                  .toList(),
+              onChanged: (v) =>
+                  setState(() => _typeCtrl.text = v ?? _types.first),
+            ),
             const SizedBox(height: 10),
-            TextField(controller: _manufacturerCtrl, decoration: const InputDecoration(labelText: 'Manufacturer')),
+            TextField(
+              controller: _serialCtrl,
+              decoration: const InputDecoration(labelText: 'Serial Number'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _manufacturerCtrl,
+              decoration: const InputDecoration(labelText: 'Manufacturer'),
+            ),
             const SizedBox(height: 10),
             TextField(
               controller: _wllCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(labelText: 'WLL (t)'),
             ),
             const SizedBox(height: 10),
@@ -294,13 +429,34 @@ class _EquipmentFormState extends State<_EquipmentForm> {
               value: _status,
               decoration: const InputDecoration(labelText: 'Status'),
               dropdownColor: const Color(0xFF2A2E33),
-              items: ['Active', 'Quarantine', 'Expired', 'Scrapped']
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                  .toList(),
+              items:
+                  <String>{
+                        'Active',
+                        'Quarantine',
+                        'Quarantined',
+                        'Hold',
+                        'Expired',
+                        'Scrapped',
+                        if (widget.existing != null) widget.existing!.status,
+                      }
+                      .toList()
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .toList(),
               onChanged: (v) => setState(() => _status = v ?? _status),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _save, child: const Text('SAVE')),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: AppColors.danger),
+                ),
+              ),
+            ElevatedButton(
+              onPressed: _saving ? null : _save,
+              child: const Text('SAVE'),
+            ),
           ],
         ),
       ),
@@ -308,8 +464,14 @@ class _EquipmentFormState extends State<_EquipmentForm> {
   }
 }
 
-class _QrScannerScreen extends StatelessWidget {
+class _QrScannerScreen extends StatefulWidget {
   const _QrScannerScreen();
+  @override
+  State<_QrScannerScreen> createState() => _QrScannerScreenState();
+}
+
+class _QrScannerScreenState extends State<_QrScannerScreen> {
+  bool handled = false;
 
   @override
   Widget build(BuildContext context) {
@@ -318,9 +480,12 @@ class _QrScannerScreen extends StatelessWidget {
       body: MobileScanner(
         onDetect: (capture) {
           final barcodes = capture.barcodes;
-          if (barcodes.isNotEmpty) {
+          if (!handled && mounted && barcodes.isNotEmpty) {
             final value = barcodes.first.rawValue;
-            if (value != null) Navigator.pop(context, value);
+            if (value != null) {
+              handled = true;
+              Navigator.pop(context, value);
+            }
           }
         },
       ),

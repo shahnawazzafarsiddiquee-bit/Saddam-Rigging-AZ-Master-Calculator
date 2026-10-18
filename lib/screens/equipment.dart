@@ -99,10 +99,10 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
               SafetyStatusBanner(
                 isSafe: eq.hasCurrentRegistration,
                 safeText: 'REGISTRATION CURRENT - VERIFY CERTIFICATE',
-                unsafeText: eq.isExpired
-                    ? 'EXPIRED / DATE UNVERIFIED'
-                    : eq.isRestricted
+                unsafeText: eq.isRestricted
                     ? eq.status.toUpperCase()
+                    : eq.isExpired
+                    ? 'EXPIRED / DATE UNVERIFIED'
                     : 'INCOMPLETE - VERIFY REGISTRATION',
               ),
             ],
@@ -188,7 +188,9 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
                         '${eq.type} • WLL ${eq.wll} t • ${eq.manufacturer}',
                       ),
                       trailing: Text(
-                        !knownExpiry
+                        eq.isRestricted
+                            ? eq.status
+                            : !knownExpiry
                             ? 'DATE UNVERIFIED'
                             : expired
                             ? 'EXPIRED'

@@ -6,6 +6,8 @@ import '../database/sqlite_helper.dart';
 import '../services/pdf_service.dart';
 import '../services/lift_equipment_service.dart';
 import '../models/equipment_model.dart';
+import 'site_environment.dart';
+import '../services/environment_repository.dart';
 
 class LiftPlanScreen extends StatefulWidget {
   const LiftPlanScreen({super.key});
@@ -30,6 +32,7 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
   final _safetyCtrl = TextEditingController();
 
   bool _saving = false;
+  Map<String, Object?>? _environment;
   final Set<int> _selectedAssets = {};
   late Future<List<EquipmentModel>> _eligibleAssets;
   @override
@@ -80,19 +83,24 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
           .join(', ');
       final riggingText =
           '${_riggingCtrl.text}\nRegistered equipment: $selectedText\nDRAFT - COMPETENT PERSON REVIEW REQUIRED';
-      await LiftEquipmentService.save({
-        'projectName': _projectCtrl.text,
-        'client': _clientCtrl.text,
-        'location': _locationCtrl.text,
-        'date': _dateCtrl.text,
-        'loadDescription': _loadDescCtrl.text,
-        'loadWeight': loadWeight,
-        'craneDetails': _craneDetailsCtrl.text,
-        'riggingArrangement': riggingText,
-        'liftingSequence': _sequenceCtrl.text,
-        'personnel': _personnelCtrl.text,
-        'safetyRequirements': _safetyCtrl.text,
-      }, _selectedAssets);
+      await LiftEquipmentService.save(
+        {
+          'projectName': _projectCtrl.text,
+          'client': _clientCtrl.text,
+          'location': _locationCtrl.text,
+          'date': _dateCtrl.text,
+          'loadDescription': _loadDescCtrl.text,
+          'loadWeight': loadWeight,
+          'craneDetails': _craneDetailsCtrl.text,
+          'riggingArrangement': riggingText,
+          'liftingSequence': _sequenceCtrl.text,
+          'personnel': _personnelCtrl.text,
+          'safetyRequirements':
+              '${_safetyCtrl.text}\n${EnvironmentRepository.summary(_environment)}',
+        },
+        _selectedAssets,
+        environment: _environment,
+      );
 
       final file = await PdfService.generateLiftPlanPdf(
         projectName: _projectCtrl.text,
@@ -105,7 +113,8 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
         riggingArrangement: riggingText,
         liftingSequence: _sequenceCtrl.text,
         personnel: _personnelCtrl.text,
-        safetyRequirements: _safetyCtrl.text,
+        safetyRequirements:
+            '${_safetyCtrl.text}\n${EnvironmentRepository.summary(_environment)}',
       );
 
       await SqliteHelper.instance.insert('Reports', {
@@ -259,6 +268,11 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
             _field(_sequenceCtrl, 'Lifting Sequence', maxLines: 4),
             _field(_personnelCtrl, 'Personnel & Responsibilities', maxLines: 2),
             _field(_safetyCtrl, 'Safety Requirements', maxLines: 3),
+            EnvironmentAttachment(
+              value: _environment,
+              project: _projectCtrl.text,
+              onChanged: (value) => setState(() => _environment = value),
+            ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: _saving ? null : _generate,

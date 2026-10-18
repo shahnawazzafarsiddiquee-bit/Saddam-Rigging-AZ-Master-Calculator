@@ -7,6 +7,9 @@ import 'package:printing/printing.dart';
 import '../app/theme.dart';
 import '../database/sqlite_helper.dart';
 import '../services/pdf_service.dart';
+import '../services/environment_repository.dart';
+import '../services/backup_service.dart';
+import 'site_environment.dart';
 
 class HseScreen extends StatelessWidget {
   const HseScreen({super.key});
@@ -60,6 +63,8 @@ class _JsaTab extends StatefulWidget {
 
 class _JsaTabState extends State<_JsaTab> {
   final _activityCtrl = TextEditingController();
+  final _projectCtrl = TextEditingController();
+  Map<String, Object?>? _environment;
   final List<_JsaStep> _steps = [_JsaStep()];
   bool _saving = false;
 
@@ -83,29 +88,57 @@ class _JsaTabState extends State<_JsaTab> {
           )
           .toList();
 
+      final environment = await BackupService.withDatabases(
+        (db) => EnvironmentRepository.resolveAttachment(
+          db,
+          _environment,
+          _projectCtrl.text,
+        ),
+      );
       final file = await PdfService.generateJsaPdf(
         activity: _activityCtrl.text,
         steps: stepsData,
+        project: _projectCtrl.text,
+        environmentSummary: EnvironmentRepository.summary(environment),
       );
-
-      await SqliteHelper.instance.insert('SafetyRecords', {
-        'recordType': 'JSA',
-        'title': _activityCtrl.text,
-        'detailsJson': jsonEncode(stepsData),
-        'createdAt': DateTime.now().toIso8601String(),
-      });
-      await SqliteHelper.instance.insert('Reports', {
-        'reportType': 'JSA',
-        'title': _activityCtrl.text,
-        'filePath': file.path,
-        'createdAt': DateTime.now().toIso8601String(),
-      });
+      await BackupService.withDatabases(
+        (db) => db.transaction((tx) async {
+          final frozenEnvironment =
+              await EnvironmentRepository.resolveAttachment(
+                tx,
+                _environment,
+                _projectCtrl.text,
+              );
+          await tx.insert('SafetyRecords', {
+            'recordType': 'JSA',
+            'title': _activityCtrl.text,
+            'detailsJson': jsonEncode({
+              'version': 1,
+              'project': _projectCtrl.text,
+              'steps': stepsData,
+              'environment': frozenEnvironment,
+            }),
+            'createdAt': DateTime.now().toUtc().toIso8601String(),
+          });
+          await tx.insert('Reports', {
+            'reportType': 'JSA',
+            'title': _activityCtrl.text,
+            'filePath': file.path,
+            'createdAt': DateTime.now().toUtc().toIso8601String(),
+          });
+        }),
+      );
 
       if (!mounted) return;
       await Printing.sharePdf(
         bytes: await file.readAsBytes(),
         filename: file.path.split('/').last,
       );
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('JSA could not be saved: $e')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -123,6 +156,15 @@ class _JsaTabState extends State<_JsaTab> {
             decoration: const InputDecoration(labelText: 'Activity'),
           ),
           const SizedBox(height: 12),
+          TextField(
+            controller: _projectCtrl,
+            decoration: const InputDecoration(labelText: 'Project / site'),
+          ),
+          EnvironmentAttachment(
+            value: _environment,
+            project: _projectCtrl.text,
+            onChanged: (value) => setState(() => _environment = value),
+          ),
           for (int i = 0; i < _steps.length; i++) _buildStepCard(i),
           OutlinedButton.icon(
             onPressed: () => setState(() => _steps.add(_JsaStep())),

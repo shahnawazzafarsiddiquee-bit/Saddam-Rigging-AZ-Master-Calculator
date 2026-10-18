@@ -18,6 +18,12 @@ Future<void> _inspectionPdf(
         rows.add(['Procedure', '${meta['procedure']}']);
         rows.add(['N/A reason', '${meta['naReason']}']);
         rows.add(['Attestation', '${meta['attestation']}']);
+        rows.add([
+          'Environment',
+          EnvironmentRepository.summary(
+            meta['environment'] as Map<String, Object?>?,
+          ),
+        ]);
         note = '${meta['notes']}';
       }
     } else if (tag == 'NOTE') {
@@ -233,7 +239,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
       final meta = tag == 'META' ? InspectionWorkflow.metadata(l) : null;
       final txt = meta == null
           ? raw
-          : 'Project: ${meta['project']}\nProcedure: ${meta['procedure']}\nN/A: ${meta['naReason']}\nNotes: ${meta['notes']}\nAttestation: ${meta['attestation']}';
+          : 'Project: ${meta['project']}\nProcedure: ${meta['procedure']}\nN/A: ${meta['naReason']}\nNotes: ${meta['notes']}\nAttestation: ${meta['attestation']}\n${EnvironmentRepository.summary(meta['environment'] as Map<String, Object?>?)}';
       final c = tag == 'OK'
           ? Colors.greenAccent
           : (tag == 'FAIL'

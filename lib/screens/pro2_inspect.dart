@@ -23,6 +23,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
   String msg = '';
   int msgLvl = 0;
   bool saving = false;
+  Map<String, Object?>? environment;
   @override
   void initState() {
     super.initState();
@@ -73,6 +74,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
         notes: notes.text,
         attested: attested,
         photos: List.of(pics),
+        environment: environment,
       );
       if (!mounted) return;
       setState(() {
@@ -81,6 +83,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
         ans.clear();
         pics.clear();
         attested = false;
+        environment = null;
         msg = result == 'REJECT'
             ? 'Saved: REJECT. Equipment quarantined; do not use. History se PDF banao'
             : 'Saved: $result. History se PDF banao';
@@ -150,6 +153,11 @@ class _InspectionScreenState extends State<InspectionScreen> {
             _textField(item, 'Item / ID (jaise: Sling #12, Tadano 50T)'),
             _textField(who, 'Inspector ka naam'),
             _textField(project, 'Project / site'),
+            EnvironmentAttachment(
+              value: environment,
+              project: project.text,
+              onChanged: (value) => setState(() => environment = value),
+            ),
             _textField(procedure, 'Approved procedure / revision'),
             _note(
               'Registered equipment ID required. REJECT quarantines the asset; HOLD blocks use. PASS never releases an existing quarantine.',

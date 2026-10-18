@@ -13,6 +13,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import 'pro2_db.dart';
+import 'site_environment.dart';
+import '../services/environment_repository.dart';
 import 'rigging_pro_db.dart';
 
 part 'pro2_diagram.dart';

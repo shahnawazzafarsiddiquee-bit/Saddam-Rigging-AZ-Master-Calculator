@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'rigging_pro.dart';
 import 'smart_radius.dart';
+import 'site_environment.dart';
+export 'site_environment.dart' show WindCheckScreen;
 export 'smart_radius.dart' show CraneBoomScreen;
 import '../services/calculation_engine.dart';
 import '../app/calculation_details.dart';
@@ -307,87 +309,6 @@ class _SlingLengthScreenState extends State<SlingLengthScreen> {
       _results(out),
       _note(
         'Container: 12 m x 2.44 m, 4 leg. Pipe: 2 leg, length = dono sling points ke beech doori. Wire rope size rule: WLL = d x d / 100 ton (estimate).',
-      ),
-      _note(_disclaimer),
-    ]);
-  }
-}
-
-// ---------------- Wind check ----------------
-class WindCheckScreen extends StatefulWidget {
-  const WindCheckScreen({super.key});
-  @override
-  State<WindCheckScreen> createState() => _WindCheckScreenState();
-}
-
-class _WindCheckScreenState extends State<WindCheckScreen> {
-  final spd = TextEditingController();
-  final ar = TextEditingController();
-  final load = TextEditingController();
-  final cdc = TextEditingController(text: '1.2');
-  List<_R> out = [];
-
-  void calc() {
-    final kmh = _n(spd);
-    if (!kmh.isFinite || kmh < 0 || spd.text.trim().isEmpty) {
-      setState(() => out = [const _R('Wind speed daalo', 3)]);
-      return;
-    }
-    final v = kmh / 3.6;
-    final res = <_R>[_R('Wind speed: ${_f(v, 1)} m/s')];
-    res.add(
-      const _R(
-        'INCOMPLETE - approved manufacturer/project wind and gust limits are required. There is no universal crane wind limit.',
-        2,
-      ),
-    );
-    final area = _n(ar);
-    final w = _n(load);
-    final cd = _n(cdc);
-    if (area > 0 && w > 0 && cd > 0) {
-      final f = 0.5 * 1.225 * v * v * cd * area;
-      final kgf = f / 9.81;
-      final pct = kgf / (w * 1000) * 100;
-      final sway = _deg(math.atan(kgf / (w * 1000)));
-      res.add(_R('Load par wind force: ${_f(kgf, 0)} kgf'));
-      res.add(_R('Load weight ka ${_f(pct, 1)}%'));
-      res.add(
-        _R('Load ka sway angle approx: ${_f(sway, 1)} deg', pct > 10 ? 2 : 1),
-      );
-      if (pct > 10) {
-        res.add(
-          const _R(
-            'Wind force zyada: load jhulega, radius badh sakta hai. Tag line zaruri',
-            2,
-          ),
-        );
-      }
-    } else {
-      res.add(const _R('Wind force ke liye load area aur weight bhi daalo', 2));
-    }
-    setState(() => out = res);
-  }
-
-  @override
-  void dispose() {
-    spd.dispose();
-    ar.dispose();
-    load.dispose();
-    cdc.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _page('Wind Check', [
-      _field(spd, 'Wind speed', suffix: 'km/h'),
-      _field(ar, 'Load ka hawa wala area (length x height)', suffix: 'm2'),
-      _field(load, 'Load weight', suffix: 'ton'),
-      _field(cdc, 'Drag factor (flat surface ~1.2)'),
-      ElevatedButton(onPressed: calc, child: const Text('Check')),
-      _results(out),
-      _note(
-        'Force = 0.5 x 1.225 x v x v x Cd x Area. Gust isse zyada ho sakta hai, isliye margin rakho.',
       ),
       _note(_disclaimer),
     ]);

@@ -30,7 +30,21 @@ launch_and_capture() {
     echo "Application did not become resumed: $label" >&2
     return 1
   fi
-  sleep 4
+  if [ "${VERIFY_VISIBLE_DASHBOARD:-0}" = 1 ]; then
+    rendered=0
+    for attempt in $(seq 1 20); do
+      adb shell uiautomator dump /sdcard/rigsafe-visible-ui.xml > "device-evidence/$label-ui-dump.txt" 2>&1 || true
+      adb exec-out cat /sdcard/rigsafe-visible-ui.xml > "device-evidence/$label-ui.xml" 2>/dev/null || true
+      if grep -F 'SADDAM RIGGING A-Z' "device-evidence/$label-ui.xml" > /dev/null; then rendered=1; break; fi
+      sleep 1
+    done
+    if [ "$rendered" != 1 ]; then
+      echo "Dashboard did not render its visible title: $label" >&2
+      return 1
+    fi
+  else
+    sleep 4
+  fi
   adb shell pidof "$package_id" > "device-evidence/$label-pid.txt"
   test -s "device-evidence/$label-pid.txt"
   app_pid=$(tr -d '\r\n' < "device-evidence/$label-pid.txt")
@@ -75,4 +89,10 @@ s=re.sub(r'(?m)^(version:\s*[^+\n]+)\+\d+',lambda m:m.group(1)+'+'+os.environ['A
 p.write_text(s)
 PY
 flutter pub get
-flutter test integration_test/android_backup_test.dart -d emulator-5554 --reporter expanded 2>&1 | tee device-evidence/native-backup-tests.txt
+flutter test "${INTEGRATION_TARGET:-integration_test/android_backup_test.dart}" -d emulator-5554 --reporter expanded 2>&1 | tee device-evidence/native-backup-tests.txt
+if [ "${VERIFY_VISIBLE_DASHBOARD:-0}" = 1 ]; then
+  for name in verified-dashboard verified-equipment verified-synthetic; do
+    adb exec-out run-as "$package_id" cat "app_flutter/$name.png" > "device-evidence/$name.png"
+    test -s "device-evidence/$name.png"
+  done
+fi

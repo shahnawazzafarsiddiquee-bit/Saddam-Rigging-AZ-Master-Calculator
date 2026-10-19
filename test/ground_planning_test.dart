@@ -19,6 +19,9 @@ Map<String, Object?> sample({
   double reaction = 400000,
   double? padLength = 0.5,
   double? thickness = 0.1,
+  double? craneMass,
+  double? payloadMass,
+  double? grossMass,
   int quantity = 1,
   Map<String, String> overrides = const {},
 }) => GroundPlanning.record(
@@ -43,6 +46,9 @@ Map<String, Object?> sample({
   padWidthM: 0.5,
   thicknessM: thickness,
   quantity: quantity,
+  craneMassKg: craneMass,
+  payloadMassKg: payloadMass,
+  grossHookMassKg: grossMass,
   verified: verified,
   now: DateTime.utc(2026, 10, 19),
 );
@@ -95,9 +101,26 @@ void main() {
     expect(four['quantity'], 4);
     expect(four['reactionSource'], 'Manufacturer reaction table page 4');
   });
+  test('reference load metadata does not double-count outrigger reaction', () {
+    final r = sample(craneMass: 50000, payloadMass: 10000, grossMass: 11000);
+    expect(r['grossHookMassKg'], 11000);
+    expect(
+      (r['result'] as Map)['values'],
+      (sample()['result'] as Map)['values'],
+    );
+    expect(
+      () => sample(payloadMass: 10000, grossMass: 9000),
+      throwsArgumentError,
+    );
+    expect(() => sample(craneMass: -1), throwsArgumentError);
+  });
   testWidgets(
-    'legacy four-input ground check remains available and editing invalidates result',
+    'legacy bearing check permits missing allowable pressure and invalidates edits',
     (tester) async {
+      tester.view.physicalSize = const Size(432, 960);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(const MaterialApp(home: GroundBearingScreen()));
       Future<void> enter(String label, String value) async {
         final f = find.byWidgetPredicate(
@@ -111,7 +134,9 @@ void main() {
       await enter('Maximum outrigger reaction from verified source', '40');
       await enter('Effective bearing length', '2');
       await enter('Effective bearing width', '2');
-      await enter('Allowable ground pressure from approved report', '20');
+
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
       final button = find.widgetWithText(ElevatedButton, 'Calculate');
       await tester.ensureVisible(button);
       await tester.pumpAndSettle();

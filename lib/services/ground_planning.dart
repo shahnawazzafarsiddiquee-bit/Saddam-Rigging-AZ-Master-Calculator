@@ -14,6 +14,9 @@ class GroundPlanning {
     required int quantity,
     required bool verified,
     required DateTime now,
+    double? craneMassKg,
+    double? payloadMassKg,
+    double? grossHookMassKg,
   }) {
     for (final e in {
       'Pad length': padLengthM,
@@ -30,6 +33,18 @@ class GroundPlanning {
       throw ArgumentError(
         'Pad must fit the entered effective footprint in the shown orientation.',
       );
+    for (final e in {
+      'Crane mass': craneMassKg,
+      'Payload mass': payloadMassKg,
+      'Gross hook mass': grossHookMassKg,
+    }.entries) {
+      if (e.value != null)
+        CalculationEngine.finite(e.value!, e.key, positive: true);
+    }
+    if (payloadMassKg != null &&
+        grossHookMassKg != null &&
+        grossHookMassKg < payloadMassKg)
+      throw ArgumentError('Gross hook load cannot be below payload.');
     final kind = context['reactionKind'];
     if (!['MANUFACTURER', 'ENGINEERING ESTIMATE'].contains(kind))
       throw ArgumentError('Reaction source type required.');
@@ -87,6 +102,9 @@ class GroundPlanning {
       'thicknessM': thicknessM,
       'quantity': quantity,
       'sourcesVerified': verified,
+      'craneMassKg': craneMassKg,
+      'payloadMassKg': payloadMassKg,
+      'grossHookMassKg': grossHookMassKg,
       'createdAt': now.toUtc().toIso8601String(),
       'result': result.toJson(),
       'approvalGranted': false,

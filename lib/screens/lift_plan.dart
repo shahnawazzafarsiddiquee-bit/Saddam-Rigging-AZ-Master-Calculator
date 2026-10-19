@@ -7,6 +7,8 @@ import '../services/pdf_service.dart';
 import '../services/lift_equipment_service.dart';
 import '../models/equipment_model.dart';
 import 'site_environment.dart';
+import 'ground_bearing.dart';
+import '../services/ground_repository.dart';
 import '../services/environment_repository.dart';
 
 class LiftPlanScreen extends StatefulWidget {
@@ -33,6 +35,7 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
 
   bool _saving = false;
   Map<String, Object?>? _environment;
+  Map<String, Object?>? _ground;
   final Set<int> _selectedAssets = {};
   late Future<List<EquipmentModel>> _eligibleAssets;
   @override
@@ -96,10 +99,11 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
           'liftingSequence': _sequenceCtrl.text,
           'personnel': _personnelCtrl.text,
           'safetyRequirements':
-              '${_safetyCtrl.text}\n${EnvironmentRepository.summary(_environment)}',
+              '${_safetyCtrl.text}\n${EnvironmentRepository.summary(_environment)}\n${GroundRepository.summary(_ground)}',
         },
         _selectedAssets,
         environment: _environment,
+        ground: _ground,
       );
 
       final file = await PdfService.generateLiftPlanPdf(
@@ -114,7 +118,7 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
         liftingSequence: _sequenceCtrl.text,
         personnel: _personnelCtrl.text,
         safetyRequirements:
-            '${_safetyCtrl.text}\n${EnvironmentRepository.summary(_environment)}',
+            '${_safetyCtrl.text}\n${EnvironmentRepository.summary(_environment)}\n${GroundRepository.summary(_ground)}',
       );
 
       await SqliteHelper.instance.insert('Reports', {
@@ -268,6 +272,11 @@ class _LiftPlanScreenState extends State<LiftPlanScreen> {
             _field(_sequenceCtrl, 'Lifting Sequence', maxLines: 4),
             _field(_personnelCtrl, 'Personnel & Responsibilities', maxLines: 2),
             _field(_safetyCtrl, 'Safety Requirements', maxLines: 3),
+            GroundAttachment(
+              value: _ground,
+              project: _projectCtrl.text,
+              onChanged: (v) => setState(() => _ground = v),
+            ),
             EnvironmentAttachment(
               value: _environment,
               project: _projectCtrl.text,

@@ -95,15 +95,26 @@ class _GroundBearingScreenState extends State<GroundBearingScreen> {
       lengthM: number('Effective bearing length'),
       widthM: number('Effective bearing width'),
       allowablePa:
-          number('Allowable ground pressure from approved report') *
-          1000 *
-          CalculationEngine.gravity,
+          optional('Allowable ground pressure from approved report') == null
+          ? null
+          : number('Allowable ground pressure from approved report') *
+                1000 *
+                CalculationEngine.gravity,
       padLengthM: optional('Pad length'),
       padWidthM: optional('Pad width'),
       thicknessM: optional('Mat thickness') == null
           ? null
           : number('Mat thickness') / 1000,
       quantity: count,
+      craneMassKg: optional('Crane self-weight (reference)') == null
+          ? null
+          : number('Crane self-weight (reference)') * 1000,
+      payloadMassKg: optional('Payload weight (reference)') == null
+          ? null
+          : number('Payload weight (reference)') * 1000,
+      grossHookMassKg: optional('Gross hook load (reference)') == null
+          ? null
+          : number('Gross hook load (reference)') * 1000,
       verified: verified,
       now: DateTime.now(),
     );
@@ -144,6 +155,8 @@ class _GroundBearingScreenState extends State<GroundBearingScreen> {
             'Ground document / revision':
                 '${data['groundSource']} / ${data['revision']}',
             'Approved by': '${data['approvedBy']}',
+            'Crane / payload / gross kg':
+                '${data['craneMassKg'] ?? 'unknown'} / ${data['payloadMassKg'] ?? 'unknown'} / ${data['grossHookMassKg'] ?? 'unknown'}',
             'Reaction N': '${inputs['reactionN']}',
             'Allowable Pa': '${inputs['allowablePa']}',
             'Mat L x W x thickness m':
@@ -287,6 +300,12 @@ class _GroundBearingScreenState extends State<GroundBearingScreen> {
             field('Crane model / asset ID'),
             field('Crane configuration / boom position'),
             field('Operating quadrant'),
+            field('Crane self-weight (reference)', unit: 't'),
+            field('Payload weight (reference)', unit: 't'),
+            field('Gross hook load (reference)', unit: 't'),
+            const Text(
+              'Reference weights are recorded only. The verified outrigger reaction already includes its applicable load cases; weights are not added again.',
+            ),
             DropdownButtonFormField<String>(
               initialValue: kind,
               isExpanded: true,
@@ -351,9 +370,11 @@ class _GroundBearingScreenState extends State<GroundBearingScreen> {
                         'Pressure: ${((values!['pressurePa'] as num) / 1000).toStringAsFixed(2)} kPa',
                       ),
                       Text('Provided area: ${values['providedAreaM2']} m2'),
-                      Text('Required area: ${values['requiredAreaM2']} m2'),
                       Text(
-                        'Utilization: ${(values['utilizationPercent'] as num).toStringAsFixed(2)}%',
+                        'Required area: ${values['requiredAreaM2'] ?? 'UNKNOWN'} m2',
+                      ),
+                      Text(
+                        'Utilization: ${(values['utilizationPercent'] as num?)?.toStringAsFixed(2) ?? 'UNKNOWN'}%',
                       ),
                       SizedBox(
                         height: 200,

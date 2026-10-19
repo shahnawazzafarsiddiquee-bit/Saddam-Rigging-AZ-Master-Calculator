@@ -7,7 +7,7 @@ class GroundPlanning {
     required double reactionN,
     required double lengthM,
     required double widthM,
-    required double allowablePa,
+    required double? allowablePa,
     required double? padLengthM,
     required double? padWidthM,
     required double? thicknessM,

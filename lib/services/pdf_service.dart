@@ -71,38 +71,32 @@ class PdfService {
   }) async {
     final doc = pw.Document();
     doc.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        build: (context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            _header('$calculatorName Report'),
-            pw.SizedBox(height: 12),
-            pw.Text(
-              'Inputs',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+        build: (context) => [
+          _header('$calculatorName Report'),
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Inputs',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+          ),
+          ...inputs.entries.map((e) => _kv(e.key, e.value)),
+          pw.SizedBox(height: 16),
+          pw.Text(
+            'Results',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+          ),
+          ...results.entries.map((e) => _kv(e.key, e.value)),
+          pw.SizedBox(height: 16),
+          pw.Container(
+            padding: const pw.EdgeInsets.all(10),
+            decoration: pw.BoxDecoration(border: pw.Border.all(width: 1.5)),
+            child: pw.Text(
+              'STATUS: $verdict',
+              style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
             ),
-            ...inputs.entries.map((e) => _kv(e.key, e.value)),
-            pw.SizedBox(height: 16),
-            pw.Text(
-              'Results',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
-            ),
-            ...results.entries.map((e) => _kv(e.key, e.value)),
-            pw.SizedBox(height: 16),
-            pw.Container(
-              padding: const pw.EdgeInsets.all(10),
-              decoration: pw.BoxDecoration(border: pw.Border.all(width: 1.5)),
-              child: pw.Text(
-                'STATUS: $verdict',
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
     return _save(doc, calculatorName.replaceAll(' ', '_').toLowerCase());

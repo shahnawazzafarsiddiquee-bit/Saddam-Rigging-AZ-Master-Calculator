@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 import '../models/equipment_model.dart';
 import 'backup_service.dart';
 import 'environment_repository.dart';
+import 'ground_repository.dart';
 
 class LiftEquipmentService {
   static String? blockedReason(
@@ -42,8 +43,10 @@ class LiftEquipmentService {
     Map<String, Object?> row,
     Set<int> equipmentIds, {
     Map<String, Object?>? environment,
+    Map<String, Object?>? ground,
   }) => BackupService.withDatabases(
-    (db) => saveTo(db, row, equipmentIds, environment: environment),
+    (db) =>
+        saveTo(db, row, equipmentIds, environment: environment, ground: ground),
   );
 
   static Future<int> saveTo(
@@ -52,6 +55,7 @@ class LiftEquipmentService {
     Set<int> equipmentIds, {
     DateTime? now,
     Map<String, Object?>? environment,
+    Map<String, Object?>? ground,
   }) async {
     final time = now ?? DateTime.now();
     final weight = row['loadWeight'];
@@ -67,6 +71,11 @@ class LiftEquipmentService {
       final attachedEnvironment = await EnvironmentRepository.resolveAttachment(
         tx,
         environment,
+        '${row['projectName']}',
+      );
+      final attachedGround = await GroundRepository.resolveAttachment(
+        tx,
+        ground,
         '${row['projectName']}',
       );
       final certs = await tx.rawQuery('SELECT * FROM pro.certs');
@@ -93,6 +102,7 @@ class LiftEquipmentService {
           'liftId': liftId,
           'equipment': snapshots,
           'environment': attachedEnvironment,
+          'ground': attachedGround,
           'status': 'DRAFT - COMPETENT PERSON REVIEW REQUIRED',
           'certificateDocumentVerificationRequired': true,
         }),

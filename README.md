@@ -159,24 +159,25 @@ lifting operations.
 
 ## Upgrade branch status
 
-Work is on `upgrade/rigsafe-super-pro`; the existing application name, colours,
-navigation and database schemas are retained. This is an incremental upgrade,
-not completion of every requested enterprise module.
+Work is on `upgrade/rigsafe-super-pro`, draft PR #5. Existing application identity,
+colours, routes and all three version-1 database schemas are retained. Every build
+contains the combined application; there are no feature-specific APKs.
 
-- Baseline APK build: Actions run 39051201748.
-- Verified build run 39092858778: analysis, 102 tests, debug APK, ARM64 APK and test-signed AAB passed.
-- Native same-key 12-table update preservation and SQLite backup/rollback passed.
-- Visual run 39095404794 passed with actual Android dashboard/equipment/synthetic PNGs.
-- Synthetic tag/source gates and legacy equipment/restricted-status validation are tested.
-- The original official Critical Lift Plan PDF was not supplied and is not in
-  the repository. Exact-template filling/visual matching is pending that file.
-- BLE, NFC, weather provider, roles, approvals and cloud sync are not configured.
+This is not completion of all 113 requested requirements. The authoritative
+row-by-row status is in `docs/upgrade/FEATURE_MATRIX.md`.
 
-See `docs/upgrade/FEATURE_MATRIX.md`, `MIGRATION_REPORT.md`, `TEST_REPORT.md`,
-`API_CONFIGURATION.md` and `DATABASE.md` for scope and limitations.
+- Phase 7 source 2c9450e, run 39182175553: 136 tests, debug APK, optimized universal APK, AAB and native same-key update/backup passed.
+- Phase 8 upgrades the existing chart editor/Finder with explicit weights, verified source/configuration metadata, exact chart rows and archived prior revisions. Latest build gate is recorded in `docs/upgrade/TEST_REPORT.md`.
+- Inspection/quarantine, eligible lift assets, smart radius, manual environment/wind snapshots, ground/mat records and PDF summaries use the existing design and database.
+- Native update checks preserve all 12 tables and photos using isolated fixtures signed with the same test key. They do not prove compatibility with the published APK signed by a different key.
+- Manual wind works offline. Real BLE/NFC/weather/cloud integrations and authenticated approvals are not configured.
+- The original Critical Lift Plan PDF has not been supplied; exact-template overlay/autofill is pending.
 
-**Existing installation warning:** the currently published APK was signed with a
-different key from the fixed repository test key. A direct update requires the
-original private signing key. Do not uninstall an existing app to bypass this:
-its local data may be removed. See the migration report for the exact scope of
-the isolated update test.
+See `docs/upgrade/MIGRATION_REPORT.md`, `TEST_REPORT.md`, `API_CONFIGURATION.md`
+and `DATABASE.md` for configuration, evidence and limitations.
+
+**Existing installation:** the published APK certificate differs from both the
+repository test key and the supplied owner key. A direct sideload update needs
+the matching app-signing key and a higher versionCode. Do not uninstall the
+existing application to bypass this mismatch; local data may be removed.
+Private keys and passwords must never be committed.

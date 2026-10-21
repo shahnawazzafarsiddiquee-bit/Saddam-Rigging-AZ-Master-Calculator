@@ -180,7 +180,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
           _R('Total lifts: ${shown.length}'),
           _R('Sabse bhaari: ${_f(heavy)} ton'),
           _R('Max utilization: ${_f(maxU, 0)}%',
-              maxU <= 75 ? 1 : (maxU <= 85 ? 2 : 3)),
+              maxU>100?3:2),
           _R('Critical lifts: $crit', crit > 0 ? 2 : 0),
         ]),
       const SizedBox(height: 8),
@@ -213,7 +213,7 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
   final project = TextEditingController();
   final descr = TextEditingController();
   final wt = TextEditingController();
-  final rig = TextEditingController(text: '0.5');
+  final rig = TextEditingController();
   final crane = TextEditingController();
   final boom = TextEditingController();
   final rad = TextEditingController();
@@ -254,7 +254,7 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
     final b = _n(boom);
     final r = _n(rad);
     final w = _n(wt) + _n(rig);
-    if (c.isEmpty || b <= 0 || r <= 0 || w <= 0) {
+    if (c.isEmpty || rig.text.trim().isEmpty || !_n(rig).isFinite || _n(rig)<0 || !_n(wt).isFinite || _n(wt)<=0 || !b.isFinite || !r.isFinite || !w.isFinite || b <= 0 || r <= 0 || w <= 0) {
       setState(() {
         msg = 'Crane, boom, radius aur load daalo';
         msgLvl = 2;
@@ -272,13 +272,13 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
     }
     setState(() {
       util.text = _f(w / hit.capacity * 100, 0);
-      msg = 'Utilization chart se nikala (load + rigging)';
-      msgLvl = 1;
+      msg = 'Preliminary comparison: payload + all rigging + hook block. Verify setup and chart deductions; this is not approval.';
+      msgLvl = 2;
     });
   }
 
   Future<void> _save() async {
-    if (_n(wt) <= 0) {
+    if (!_n(wt).isFinite || _n(wt) <= 0 || [_n(boom),_n(rad),_n(util)].any((v)=>!v.isFinite||v<0)) {
       setState(() {
         msg = 'Load weight daalo';
         msgLvl = 3;
@@ -296,7 +296,7 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
         'radius': _n(rad),
         'util': _n(util),
         'result': result,
-        'notes': notes.text.trim(),
+        'notes': '${notes.text.trim()}\nRigging + block entered (t): ${rig.text.trim().isEmpty?'not recorded':rig.text.trim()}',
       });
       if (!mounted) return;
       Navigator.pop(context);

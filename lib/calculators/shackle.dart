@@ -13,7 +13,7 @@ class ShackleCalculator extends StatefulWidget {
 
 // Standard metric bow shackle WLL sizes (tonnes) — common rigging catalogue values.
 const List<double> _standardShackleSizes = [
-  0.5, 0.75, 1, 1.5, 2, 3.25, 4.75, 6.5, 8.5, 9.5, 12, 13.5, 17, 25, 35, 55, 75, 85, 120, 150
+  0.5, 0.75, 1, 1.5, 2, 3.25, 4.75, 6.5, 8.5, 9.5, 12, 13.5, 17, 25, 35, 55, 75, 85, 120, 150,
 ];
 
 class _ShackleCalculatorState extends State<ShackleCalculator> {
@@ -25,26 +25,35 @@ class _ShackleCalculatorState extends State<ShackleCalculator> {
   double? _recommendedSize;
 
   void _calculate() {
+    setState(() => _requiredCapacity = null);
     final load = double.tryParse(_loadCtrl.text);
-    final sf = double.tryParse(_sfCtrl.text) ?? 1.25;
+    final sf = _sfCtrl.text.trim().isEmpty
+        ? 1.25
+        : double.tryParse(_sfCtrl.text) ?? double.nan;
 
-    if (load == null || load <= 0 || _legs <= 0) {
+    if (load == null ||
+        !load.isFinite ||
+        load <= 0 ||
+        !sf.isFinite ||
+        sf < 1 || _legs <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid load.')),
-      );
+        const SnackBar(content: Text('Enter a valid load.')));
       return;
     }
 
     final loadPerShackle = load / _legs;
     final required = loadPerShackle * sf;
+    if (!required.isFinite) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Result is outside the supported numeric range.')));return;
+    }
     final recommended = _standardShackleSizes.firstWhere(
       (s) => s >= required,
-      orElse: () => _standardShackleSizes.last,
+      orElse: () => 0,
     );
 
     setState(() {
       _requiredCapacity = required;
-      _recommendedSize = recommended;
+      _recommendedSize = recommended > 0 ? recommended : null;
     });
   }
 
@@ -59,8 +68,12 @@ class _ShackleCalculatorState extends State<ShackleCalculator> {
           children: [
             TextField(
               controller: _loadCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Load per Sling Arrangement (t)'),
+              onChanged: (_) => setState(() => _requiredCapacity = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Load per Sling Arrangement (t)',
+              ),
             ),
             const SizedBox(height: 12),
             const Text('Number of Shackles Sharing the Load'),
@@ -78,11 +91,16 @@ class _ShackleCalculatorState extends State<ShackleCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _sfCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Safety Margin Factor (default 1.25)'),
+              onChanged: (_) => setState(() => _requiredCapacity = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Safety Margin Factor (default 1.25)',
+              ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE')),
+            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE'),
+            ),
             if (_requiredCapacity != null) ...[
               const SizedBox(height: 24),
               Card(
@@ -91,8 +109,14 @@ class _ShackleCalculatorState extends State<ShackleCalculator> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ResultRow(label: 'Required Shackle Capacity', value: '${_requiredCapacity!.toStringAsFixed(2)} t'),
-                      ResultRow(label: 'Recommended Standard Size', value: '${_recommendedSize!.toStringAsFixed(2)} t WLL'),
+                      ResultRow(label: 'Required Shackle Capacity', value: '${_requiredCapacity!.toStringAsFixed(2)} t',
+                      ),
+                      ResultRow(
+                        label: 'Recommended Standard Size',
+                        value: _recommendedSize == null
+                            ? 'NO LISTED SIZE MEETS DEMAND'
+                            : '${_recommendedSize!.toStringAsFixed(2)} t WLL',
+                      ),
                       const SizedBox(height: 8),
                       const Text(
                         'Always confirm the pin diameter matches the sling eye and check manufacturer markings before use.',

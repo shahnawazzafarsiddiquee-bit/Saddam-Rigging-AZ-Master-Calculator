@@ -18,7 +18,8 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
   final _thicknessCtrl = TextEditingController(); // mm
   final _holeDiaCtrl = TextEditingController(); // mm
   final _plateWidthCtrl = TextEditingController(); // mm, width of plate at pin (cheek plate width beyond hole x2)
-  final _yieldCtrl = TextEditingController(text: '250'); // MPa, e.g. mild steel S275 ~ 275, use 250 conservative
+  final _yieldCtrl = TextEditingController(text: '250',
+  ); // MPa, e.g. mild steel S275 ~ 275, use 250 conservative
   final _sfCtrl = TextEditingController(text: '3');
 
   double? _bearingStressMpa;
@@ -27,17 +28,32 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
   bool? _safe;
 
   void _calculate() {
+    setState(() => _bearingStressMpa = null);
     final loadT = double.tryParse(_loadCtrl.text); // tonnes
     final thickness = double.tryParse(_thicknessCtrl.text); // mm
     final holeDia = double.tryParse(_holeDiaCtrl.text); // mm
-    final plateWidth = double.tryParse(_plateWidthCtrl.text); // mm (net width beyond hole, both sides combined)
-    final yieldMpa = double.tryParse(_yieldCtrl.text) ?? 250;
-    final sf = double.tryParse(_sfCtrl.text) ?? 3;
+    final plateWidth = double.tryParse(_plateWidthCtrl.text,
+    ); // mm (net width beyond hole, both sides combined)
+    final yieldMpa = _yieldCtrl.text.trim().isEmpty
+        ? 250.0
+        : double.tryParse(_yieldCtrl.text) ?? double.nan;
+    final sf = _sfCtrl.text.trim().isEmpty
+        ? 3.0
+        : double.tryParse(_sfCtrl.text) ?? double.nan;
 
     if (loadT == null || thickness == null || holeDia == null || plateWidth == null ||
-        loadT <= 0 || thickness <= 0 || holeDia <= 0 || plateWidth <= 0) {
+        loadT <= 0 || thickness <= 0 || holeDia <= 0 || plateWidth <= 0 ||
+        !loadT.isFinite ||
+        !thickness.isFinite ||
+        !holeDia.isFinite ||
+        !plateWidth.isFinite ||
+        !yieldMpa.isFinite ||
+        !sf.isFinite ||
+        yieldMpa <= 0 ||
+        sf < 1) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fill in all padeye fields with valid numbers.')),
+        const SnackBar(content: Text('Fill in all padeye fields with valid numbers.'),
+        ),
       );
       return;
     }
@@ -56,6 +72,9 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
 
     final allowable = yieldMpa / sf;
     final worstStress = max(bearingStress, tensileStress);
+    if (![bearingStress,tensileStress,allowable].every((v)=>v.isFinite)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Result is outside the supported numeric range.')));return;
+    }
     final safe = worstStress <= allowable;
 
     setState(() {
@@ -77,41 +96,66 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
           children: [
             TextField(
               controller: _loadCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Applied Load on Pad Eye (t)'),
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Applied Load on Pad Eye (t)',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _thicknessCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Plate Thickness (mm)'),
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Plate Thickness (mm)',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _holeDiaCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Pin Hole Diameter (mm)'),
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Pin Hole Diameter (mm)',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _plateWidthCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Net Plate Width Beyond Hole (mm, both sides)'),
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Net Plate Width Beyond Hole (mm, both sides)',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _yieldCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Plate Yield Strength (MPa, default 250)'),
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Plate Yield Strength (MPa, default 250)',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _sfCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Safety Factor (default 3:1)'),
+              onChanged: (_) => setState(() => _bearingStressMpa = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Safety Factor (default 3:1)',
+              ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE')),
+            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE'),
+            ),
             if (_bearingStressMpa != null) ...[
               const SizedBox(height: 24),
               Card(
@@ -120,9 +164,16 @@ class _PadEyeCalculatorState extends State<PadEyeCalculator> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ResultRow(label: 'Bearing Stress', value: '${_bearingStressMpa!.toStringAsFixed(1)} MPa'),
-                      ResultRow(label: 'Tensile Stress (net section)', value: '${_tensileStressMpa!.toStringAsFixed(1)} MPa'),
-                      ResultRow(label: 'Allowable Stress', value: '${_allowableStressMpa!.toStringAsFixed(1)} MPa'),
+                      ResultRow(label: 'Bearing Stress', value: '${_bearingStressMpa!.toStringAsFixed(1)} MPa',
+                      ),
+                      ResultRow(
+                        label: 'Tensile Stress (net section)',
+                        value: '${_tensileStressMpa!.toStringAsFixed(1)} MPa',
+                      ),
+                      ResultRow(
+                        label: 'Allowable Stress',
+                        value: '${_allowableStressMpa!.toStringAsFixed(1)} MPa',
+                      ),
                       const SizedBox(height: 12),
                       SafetyStatusBanner(isSafe: _safe ?? false),
                       const SizedBox(height: 8),

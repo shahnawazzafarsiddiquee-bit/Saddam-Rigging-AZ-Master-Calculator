@@ -18,14 +18,14 @@ construction and industrial lifting sites.
 | Shackle Calculator | Required capacity vs. standard bow-shackle sizes |
 | Wire Rope Calculator | Approximate breaking strength by construction/grade, `WLL = Breaking Strength / SF` |
 | D/d Ratio | `D/d = Sheave Diameter / Rope Diameter`, checked against minimum safe ratio |
-| Center of Gravity | Multi-point-load COG (weighted average of X/Y positions) |
+| Center of Gravity | Multi-point-load COG (weighted average of X/Y/Z positions) |
 | Pad Eye Check | Bearing stress + tensile stress vs. allowable stress |
 
-Every calculator shows a clear **SAFE / NOT SAFE** verdict banner.
+Upgraded calculators show calculation-only, review, overload or incomplete-data statuses. Numerical results never authorize a lift. Legacy modules remain under audit; see `docs/upgrade/FEATURE_MATRIX.md`.
 
 ### 2. Crane Planning
 Built-in representative crane load-chart database (mobile / crawler / all-terrain
-cranes) with radius-based capacity interpolation and utilization % check.
+cranes) with exact-row capacity lookup and gross-hook-load utilization checks. Representative rows are unverified reference data; use the applicable manufacturer chart and configuration for actual lift planning.
 
 ### 3. Lift Plan Generator
 Full lift-plan form (project, client, load, crane, rigging arrangement,
@@ -155,3 +155,30 @@ local filesystem. No data is sent to any server.
 ## License
 Internal engineering tool — adapt freely for your organization's rigging and
 lifting operations.
+
+
+## Upgrade branch status
+
+Work is on `upgrade/rigsafe-super-pro`, draft PR #5. Existing application identity,
+colours, routes and all three version-1 database schemas are retained. Every build
+contains the combined application; there are no feature-specific APKs.
+
+This is not completion of all 113 requested requirements. The authoritative
+row-by-row status is in `docs/upgrade/FEATURE_MATRIX.md`.
+
+- Phase 7 source 2c9450e, run 39182175553: 136 tests, debug APK, optimized universal APK, AAB and native same-key update/backup passed.
+- Phase 8 run 39564576329, source a681430: 146 tests, debug/universal APK, AAB and native same-key update/backup passed (versionCode 1023).
+- Phase 8 upgrades the existing chart editor/Finder with explicit weights, verified source/configuration metadata, exact chart rows and archived prior revisions. Latest build gate is recorded in `docs/upgrade/TEST_REPORT.md`.
+- Inspection/quarantine, eligible lift assets, smart radius, manual environment/wind snapshots, ground/mat records and PDF summaries use the existing design and database.
+- Native update checks preserve all 12 tables and photos using isolated fixtures signed with the same test key. They do not prove compatibility with the published APK signed by a different key.
+- Manual wind works offline. Real BLE/NFC/weather/cloud integrations and authenticated approvals are not configured.
+- The original Critical Lift Plan PDF has not been supplied; exact-template overlay/autofill is pending.
+
+See `docs/upgrade/MIGRATION_REPORT.md`, `TEST_REPORT.md`, `API_CONFIGURATION.md`
+and `DATABASE.md` for configuration, evidence and limitations.
+
+**Existing installation:** the published APK certificate differs from both the
+repository test key and the supplied owner key. A direct sideload update needs
+the matching app-signing key and a higher versionCode. Do not uninstall the
+existing application to bypass this mismatch; local data may be removed.
+Private keys and passwords must never be committed.

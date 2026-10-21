@@ -120,7 +120,7 @@ class AppTheme {
   }
 }
 
-/// Reusable "SAFE / NOT SAFE" style status chip used across all calculators.
+/// Reusable preliminary numerical status chip. Never a lifting authorization.
 class SafetyStatusBanner extends StatelessWidget {
   final bool isSafe;
   final String safeText;
@@ -129,8 +129,8 @@ class SafetyStatusBanner extends StatelessWidget {
   const SafetyStatusBanner({
     super.key,
     required this.isSafe,
-    this.safeText = 'SAFE',
-    this.unsafeText = 'NOT SAFE',
+    this.safeText = 'CALCULATION ONLY',
+    this.unsafeText = 'REVIEW REQUIRED',
   });
 
   @override
@@ -150,15 +150,16 @@ class SafetyStatusBanner extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 32),
           const SizedBox(width: 12),
-          Text(
+          Flexible(child: Text(
             isSafe ? safeText : unsafeText,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: color,
               fontSize: 22,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.2,
             ),
-          ),
+          )),
         ],
       ),
     );
@@ -177,12 +178,14 @@ class ResultRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 15)),
-          Text(value,
+          Expanded(child: Text(label, style: const TextStyle(color: Colors.white70, fontSize: 15))),
+          const SizedBox(width: 12),
+          Flexible(child: Text(value,
+              textAlign: TextAlign.right,
               style: const TextStyle(
                   color: AppColors.textLight,
                   fontSize: 16,
-                  fontWeight: FontWeight.bold)),
+                  fontWeight: FontWeight.bold))),
         ],
       ),
     );

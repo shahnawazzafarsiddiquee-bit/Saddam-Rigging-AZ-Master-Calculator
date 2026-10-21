@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/calculation_engine.dart';
+
 class UnitConverterScreen extends StatefulWidget {
   const UnitConverterScreen({super.key});
   @override
@@ -7,20 +9,7 @@ class UnitConverterScreen extends StatefulWidget {
 }
 
 class _UnitConverterScreenState extends State<UnitConverterScreen> {
-  static const Map<String, Map<String, double>> groups = {
-    'Length': {
-      'mm': 0.001,
-      'cm': 0.01,
-      'm': 1.0,
-      'inch': 0.0254,
-      'ft': 0.3048,
-    },
-    'Weight': {
-      'kg': 1.0,
-      'ton': 1000.0,
-      'lb': 0.45359237,
-    },
-  };
+  static const groups = UnitConversion.groups;
 
   final input = TextEditingController(text: '1');
   String group = 'Length';
@@ -45,8 +34,8 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
   @override
   Widget build(BuildContext context) {
     final units = groups[group]!;
-    final v = double.tryParse(input.text.trim().replaceAll(',', '.')) ?? 0;
-    final base = v * units[from]!;
+    final v = double.tryParse(input.text.trim().replaceAll(',', '.'));
+    final valid = v != null && v.isFinite;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Unit Converter')),
@@ -62,16 +51,18 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
                         selected: group == g,
                         onSelected: (_) => setState(() {
                           group = g;
-                          from = g == 'Length' ? 'm' : 'kg';
-                        }),
-                      ))
+                          from = g == 'Length' ? 'm' : groups[g]!.keys.first;
+                      }),
+                    ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: input,
               keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+                  const TextInputType.numberWithOptions(decimal: true,
+              ),
               onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
                 labelText: 'Value',
@@ -88,22 +79,29 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
                         label: Text(u),
                         selected: from == u,
                         onSelected: (_) => setState(() => from = u),
-                      ))
+                      ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: 16),
-            ...units.entries.map((e) => Card(
+            if (!valid) const Text('Enter a finite numeric value.'),
+            if (valid)
+              ...units.entries.map((e) => Card(
                   child: ListTile(
                     title: Text(
-                      '${fmt(base / e.value)} ${e.key}',
+                      '${fmt(UnitConversion.convert(v, from, e.key))} ${e.key}',
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w600),
+                          fontSize: 18, fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                )),
+                ),
+              ),
             const Padding(
               padding: EdgeInsets.only(top: 12),
-              child: Text('1 inch = 25.4 mm, 1 ft = 12 inch, 1 ton = 1000 kg'),
+              child: Text(
+                'Metric tonne = 1000 kg. US short ton and UK long ton are listed separately. Force and mass are different quantities.',
+              ),
             ),
           ],
         ),

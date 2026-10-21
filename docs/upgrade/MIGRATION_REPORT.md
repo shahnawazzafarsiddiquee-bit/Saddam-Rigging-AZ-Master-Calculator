@@ -1,0 +1,80 @@
+# Phase 1 migration and preservation report
+
+Baseline application: 9a1965f22c7529bb02d6225900353c5a0b873f1e.
+Baseline debug APK: GitHub Actions run 39051201748, successful.
+Phase 1 verification run: 39072237698. Static analysis, 60 preservation/layout tests and debug APK compilation passed.
+Phase 2 verification run: 39073629975. Static analysis, 82 tests and debug APK compilation passed.
+Native run 39091132004: analysis, 84 tests and APK build passed. Device update failed before restore testing because the original CI artifact and new APK used different generated debug certificates. No native preservation pass is claimed for that run.
+
+## Schema changes
+None. All three existing database filenames, version 1 schemas, table names,
+columns and existing record IDs are retained. No production device database
+was supplied; no claim of a production-device migration is made.
+
+## Backup changes
+- The versioned JSON backup includes all 12 tables in all three databases.
+- Photo blobs use base64; original inspection/photo IDs are preserved.
+- All rows and schema fields are validated before deleting records.
+- A restore transaction spans attached database files with rollback journaling.
+- Full restore refuses unsupported journal modes before any deletion.
+- A full automatic recovery backup is written before an intentional restore.
+- Legacy six-table backups restore main only; Pro data is retained.
+- JSON output uses a temporary file and rename after a flushed write.
+
+## Limits
+External PDFs are referenced by path, not embedded. Keep original PDFs separately.
+The settings screen and backup metadata state this limitation.
+Native same-key in-place installation and SQLite restore/rollback passed in run 39092858778. Android file selection/sharing and production-device upgrade remain unverified.
+
+## Tests and runtime checks
+Frozen schema fixtures reproduce all 12 tables from the released commit.
+Tests cover all-table round trip, photo bytes/IDs, legacy compatibility,
+malformed backups, missing database/table, unknown column, wrong value type,
+invalid blob, duplicate IDs, dangling photo references, transaction rollback
+after a late insert error, TRUNCATE/PERSIST rollback-journal restoration and refusal of WAL restoration.
+
+The isolated Android job installs the baseline APK, seeds all 12 released tables, updates without uninstalling, compares IDs/values/photo bytes and checks APK signer identity. A separate integration target exercises BackupService with the real Android SQLite and path-provider plugins. These fixtures are not packaged as production user data.
+
+
+## Signing compatibility — material limitation
+
+The published `latest/saddam-rigging.apk` certificate SHA256 is
+`134e40b6363976161bad4c851d0df139ffaf1dce3cb00037e879997dd2db1c9d`.
+The repository's existing fixed debug keystore certificate is
+`df8356e1e772135b87347f1cb18cf2a6c66c01acba3f8a06ff6e66b646ae76ba`.
+The first CI baseline and subsequent debug artifacts also had different
+certificates. Copying a key into the default home path did not pin the signing
+identity. The upgrade explicitly sets the debug storeFile to the existing key.
+
+An installed published APK signed with the former key cannot be updated by
+this different key. Its original private signing key is required. Do not
+uninstall the existing application: this may remove its local records.
+No signing-key recovery or production-device migration is claimed.
+
+The corrected isolated migration test rebuilds original commit 9a1965f with
+only the signing-path fix, then installs its v1 fixtures and updates to the
+new build signed by the same fixed key. This verifies data/schema compatibility
+and a stable key for future builds; it does not establish compatibility with
+the differently signed published APK.
+
+## Completed native checkpoint
+
+Run 39092858778 passed all four jobs, including 102 tests, native 12-table preservation and actual SQLite rollback. Visual run 39095404794 independently repeated the same-key install/update and captured rendered Android screens. No production data was modified. Nullable legacy equipment values are handled when reading; no destructive rewrite or schema migration was introduced.
+
+## Owner-supplied key check
+
+The supplied keystore unlocks successfully and has certificate SHA256
+`aea20140ec1a0639451afc46384ed7b8caef1e4965c929bc646977eeb5942ce4`.
+It differs from both the published APK and repository test certificate. It may serve as an upload key, but it does not prove compatibility with the user's installed APK. No password or private key is committed.
+
+## Phase 4 storage changes
+
+Existing `pro2.inspections.details` keeps original answer lines with a versioned META JSON suffix; existing viewers retain legacy support. Photos remain in `pro2.photos`. Existing main `SafetyRecords` stores equipment audit and immutable lift-equipment snapshots. All tables/IDs/schema versions remain unchanged. New inspection history is retained; PASS cannot release restricted equipment. Transactions use the same serialized attachment guard as backup/restore.
+
+## Phase 5–8 additive records
+
+Schema versions and all 12 tables remain unchanged. Radius, environment and ground records use existing SafetyRecords JSON. Lift Equipment records additionally hold immutable environment/ground snapshots resolved inside the save transaction; wrong project, missing source record or changed timestamp blocks attachment. Inspection/JSA retain environment snapshots in their existing metadata.
+
+Chart verification is versioned JSON in the existing pro.chart.note field. Legacy text/rows remain readable but unverified. Editing/renaming/withdrawing a chart archives complete prior rows, IDs and notes to SafetyRecords before removing the active selection, in the same attached-database transaction. A failed insertion rolls back the whole change. No approved chart is silently overwritten without a retained archive. Imported chart documents live in app documents; backups retain their paths, not their bytes. Copy those documents separately when transferring devices.
+
+Native preservation and backup/rollback were rerun successfully at Phase 6 and Phase 7. The owner-key versus published-key mismatch remains unresolved and is independent of schema preservation.

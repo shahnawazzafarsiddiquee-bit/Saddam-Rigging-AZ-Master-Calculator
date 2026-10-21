@@ -37,11 +37,22 @@ class _WireRopeCalculatorState extends State<WireRopeCalculator> {
   bool? _safe;
 
   void _calculate() {
+    setState(() => _breakingStrength = null);
     final d = double.tryParse(_diameterCtrl.text);
-    final sf = double.tryParse(_sfCtrl.text) ?? 5;
+    final sf = _sfCtrl.text.trim().isEmpty
+        ? 5.0
+        : double.tryParse(_sfCtrl.text) ?? double.nan;
     final appliedLoad = double.tryParse(_appliedLoadCtrl.text);
 
-    if (d == null || d <= 0 || sf <= 0) {
+    if (d == null ||
+        !d.isFinite ||
+        d <= 0 ||
+        !sf.isFinite ||
+        sf < 1 ||
+        (_appliedLoadCtrl.text.trim().isNotEmpty &&
+            (appliedLoad == null ||
+                !appliedLoad.isFinite ||
+                appliedLoad <= 0))) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter a valid rope diameter.')),
       );
@@ -49,8 +60,11 @@ class _WireRopeCalculatorState extends State<WireRopeCalculator> {
     }
 
     final breaking = _construction.k * pow(d, 2);
+    if (!breaking.isFinite) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Result is outside the supported numeric range.')));return;
+    }
     final wll = breaking / sf;
-    final safe = appliedLoad == null ? true : appliedLoad <= wll;
+    final safe = appliedLoad == null ? null : appliedLoad <= wll;
 
     setState(() {
       _breakingStrength = breaking.toDouble();
@@ -70,33 +84,50 @@ class _WireRopeCalculatorState extends State<WireRopeCalculator> {
           children: [
             TextField(
               controller: _diameterCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Rope Diameter (mm)'),
+              onChanged: (_) => setState(() => _breakingStrength = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Rope Diameter (mm)',
+              ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<_Construction>(
+              isExpanded: true,
               value: _construction,
-              decoration: const InputDecoration(labelText: 'Construction / Grade'),
+              decoration: const InputDecoration(labelText: 'Construction / Grade',
+              ),
               dropdownColor: const Color(0xFF2A2E33),
               items: _constructions
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c.label, overflow: TextOverflow.ellipsis)))
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c.label, overflow: TextOverflow.ellipsis),
+                    ),
+                  )
                   .toList(),
               onChanged: (v) => setState(() => _construction = v ?? _construction),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _sfCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Design Safety Factor (default 5:1)'),
+              onChanged: (_) => setState(() => _breakingStrength = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Design Safety Factor (default 5:1)',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _appliedLoadCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Applied Load (t) — optional, for SAFE check'),
+              onChanged: (_) => setState(() => _breakingStrength = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Applied Load (t) — optional numerical comparison',
+              ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE')),
+            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE'),
+            ),
             if (_breakingStrength != null) ...[
               const SizedBox(height: 24),
               Card(
@@ -105,10 +136,18 @@ class _WireRopeCalculatorState extends State<WireRopeCalculator> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ResultRow(label: 'Approx. Breaking Strength', value: '${_breakingStrength!.toStringAsFixed(2)} t'),
-                      ResultRow(label: 'Working Load Limit (WLL)', value: '${_wll!.toStringAsFixed(2)} t'),
+                      ResultRow(label: 'Approx. Breaking Strength', value: '${_breakingStrength!.toStringAsFixed(2)} t',
+                      ),
+                      ResultRow(
+                        label: 'Working Load Limit (WLL)',
+                        value: '${_wll!.toStringAsFixed(2)} t',
+                      ),
                       const SizedBox(height: 12),
-                      SafetyStatusBanner(isSafe: _safe ?? true),
+                      SafetyStatusBanner(isSafe: false,
+                        unsafeText: _safe == null
+                            ? 'INCOMPLETE'
+                            : 'REVIEW REQUIRED',
+                      ),
                       const SizedBox(height: 8),
                       const Text(
                         'Coefficients are typical catalogue approximations — always confirm against the manufacturer\'s certified breaking load.',

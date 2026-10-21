@@ -33,19 +33,31 @@ class _WllCalculatorState extends State<WllCalculator> {
   }
 
   void _calculate() {
+    setState(() => _wll = null);
     final breakingLoad = double.tryParse(_breakingLoadCtrl.text);
-    final sf = double.tryParse(_sfCtrl.text) ?? _defaultSf(_type);
+    final sf = _sfCtrl.text.trim().isEmpty
+        ? _defaultSf(_type)
+        : double.tryParse(_sfCtrl.text) ?? double.nan;
     final appliedLoad = double.tryParse(_appliedLoadCtrl.text);
 
-    if (breakingLoad == null || breakingLoad <= 0 || sf <= 0) {
+    if (breakingLoad == null ||
+        !breakingLoad.isFinite ||
+        breakingLoad <= 0 ||
+        !sf.isFinite ||
+        sf < 1 ||
+        (_appliedLoadCtrl.text.trim().isNotEmpty &&
+            (appliedLoad == null ||
+                !appliedLoad.isFinite ||
+                appliedLoad <= 0))) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid breaking load and safety factor.')),
+        const SnackBar(content: Text('Enter a valid breaking load and safety factor.'),
+        ),
       );
       return;
     }
 
     final wll = breakingLoad / sf;
-    final safe = appliedLoad == null ? true : appliedLoad <= wll;
+    final safe = appliedLoad == null ? null : appliedLoad <= wll;
 
     setState(() {
       _wll = wll;
@@ -75,7 +87,8 @@ class _WllCalculatorState extends State<WllCalculator> {
           children: [
             SegmentedButton<_WllType>(
               segments: _WllType.values
-                  .map((t) => ButtonSegment(value: t, label: Text(_typeLabel(t))))
+                  .map((t) => ButtonSegment(value: t, label: Text(_typeLabel(t))),
+                  )
                   .toList(),
               selected: {_type},
               onSelectionChanged: (s) => setState(() => _type = s.first),
@@ -83,13 +96,19 @@ class _WllCalculatorState extends State<WllCalculator> {
             const SizedBox(height: 16),
             TextField(
               controller: _breakingLoadCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Minimum Breaking Load / MBL (t)'),
+              onChanged: (_) => setState(() => _wll = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Minimum Breaking Load / MBL (t)',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _sfCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (_) => setState(() => _wll = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
               decoration: InputDecoration(
                 labelText: 'Safety Factor (default ${_defaultSf(_type).toStringAsFixed(0)}:1)',
               ),
@@ -97,11 +116,16 @@ class _WllCalculatorState extends State<WllCalculator> {
             const SizedBox(height: 12),
             TextField(
               controller: _appliedLoadCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Applied Load (t) — optional, for SAFE check'),
+              onChanged: (_) => setState(() => _wll = null),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Applied Load (t) — optional, for SAFE check',
+              ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE')),
+            ElevatedButton(onPressed: _calculate, child: const Text('CALCULATE'),
+            ),
             if (_wll != null) ...[
               const SizedBox(height: 24),
               Card(
@@ -110,9 +134,14 @@ class _WllCalculatorState extends State<WllCalculator> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ResultRow(label: '${_typeLabel(_type)} WLL', value: '${_wll!.toStringAsFixed(2)} t'),
+                      ResultRow(label: '${_typeLabel(_type)} WLL', value: '${_wll!.toStringAsFixed(2)} t',
+                      ),
                       const SizedBox(height: 12),
-                      SafetyStatusBanner(isSafe: _safe ?? true),
+                      SafetyStatusBanner(isSafe: _safe ?? false,
+                        unsafeText: _safe == null
+                            ? 'INCOMPLETE'
+                            : 'REVIEW REQUIRED',
+                      ),
                     ],
                   ),
                 ),

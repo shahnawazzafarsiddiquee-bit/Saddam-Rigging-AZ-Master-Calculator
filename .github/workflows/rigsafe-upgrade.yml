@@ -1,0 +1,209 @@
+name: RIGSAFE Upgrade Checks
+on:
+  push:
+    branches: [upgrade/rigsafe-super-pro]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    outputs:
+      version_code: ${{ steps.version.outputs.code }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.7'
+          cache: true
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
+      - id: version
+        run: echo "code=$((1000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_OUTPUT"
+      - run: flutter --version
+      - run: flutter pub get
+      - name: Analyze baseline
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Tests when present
+        run: |
+          if [ -d test ]; then flutter test; fi
+      - name: Reuse existing app signing identity
+        run: |
+          mkdir -p ~/.android
+          cp android/keystore/fixed_debug.p12 ~/.android/debug.keystore
+      - name: Build current Android application
+        run: flutter build apk --debug --build-number=${{ steps.version.outputs.code }}
+      - name: Verify fixed sideload signing certificate
+        run: |
+          signer=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --verbose --print-certs build/app/outputs/flutter-apk/app-debug.apk > build/apk-signature.txt
+          cat build/apk-signature.txt
+          grep -F 'df8356e1e772135b87347f1cb18cf2a6c66c01acba3f8a06ff6e66b646ae76ba' build/apk-signature.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rigsafe-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  android-device:
+    if: contains(github.event.head_commit.message, '[device-check]')
+    needs: [verify, baseline-fixed-key]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      APP_VERSION_CODE: ${{ needs.verify.outputs.version_code }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.7'
+          cache: true
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: rigsafe-debug
+          path: artifacts/current
+      - uses: actions/download-artifact@v4
+        with:
+          name: rigsafe-baseline-fixed-key
+          path: artifacts/baseline
+      - name: Reuse existing test signing identity
+        run: |
+          mkdir -p ~/.android
+          cp android/keystore/fixed_debug.p12 ~/.android/debug.keystore
+      - name: Enable KVM for isolated emulator runner
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify Android update and native backup
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash test/android_device_smoke.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rigsafe-device-evidence
+          path: device-evidence/
+          if-no-files-found: warn
+          retention-days: 30
+
+  packages:
+    if: contains(github.event.head_commit.message, '[packages]')
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.7'
+          cache: true
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
+      - run: flutter pub get
+      - name: Use existing sideload test signing identity
+        run: |
+          mkdir -p ~/.android
+          cp android/keystore/fixed_debug.p12 ~/.android/debug.keystore
+      - name: Build optimized universal sideload APK
+        run: flutter build apk --release --build-number=${{ needs.verify.outputs.version_code }}
+      - name: Keep optimized APK
+        run: |
+          mkdir -p packages
+          cp build/app/outputs/flutter-apk/app-release.apk packages/Rigsafe-universal-release-test-signed.apk
+      - name: Build AAB with test signing only
+        run: flutter build appbundle --release --build-number=${{ needs.verify.outputs.version_code }}
+      - name: Export official SDK signer for private owner-key signing
+        run: |
+          signer=$(find "$ANDROID_HOME/build-tools" -type f -path '*/lib/apksigner.jar' | sort -V | tail -n 1)
+          test -n "$signer"
+          mkdir -p signing-tools
+          cp "$signer" signing-tools/apksigner.jar
+          sha256sum signing-tools/apksigner.jar > signing-tools/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rigsafe-official-signing-tool
+          path: signing-tools/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Record package hashes and signing scope
+        run: |
+          cp build/app/outputs/bundle/release/app-release.aab packages/Rigsafe-release-test-signed.aab
+          sha256sum packages/* > packages/SHA256SUMS.txt
+          echo 'Test signing only. This AAB is not ready for Play upload without the owner upload key and release review.' > packages/SIGNING.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rigsafe-test-signed-packages
+          path: packages/
+          if-no-files-found: error
+          retention-days: 30
+
+  baseline-fixed-key:
+    if: contains(github.event.head_commit.message, '[device-check]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: 9a1965f22c7529bb02d6225900353c5a0b873f1e
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.7'
+          cache: true
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
+      - name: Pin signing path for original source test build
+        run: |
+          python - <<'PYCODE'
+          from pathlib import Path
+          p=Path('android/app/build.gradle')
+          s=p.read_text()
+          old='    signingConfigs {\n'
+          assert old in s
+          s=s.replace(old,old+'        debug { storeFile rootProject.file("keystore/fixed_debug.p12") }\n',1)
+          p.write_text(s)
+          PYCODE
+      - run: flutter pub get
+      - name: Rebuild original application with stable test signing
+        run: flutter build apk --debug --build-number=1000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rigsafe-baseline-fixed-key
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30

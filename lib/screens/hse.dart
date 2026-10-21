@@ -1,9 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
+
 import '../app/theme.dart';
 import '../database/sqlite_helper.dart';
 import '../services/pdf_service.dart';
+import '../services/environment_repository.dart';
+import '../services/backup_service.dart';
+import 'site_environment.dart';
 
 class HseScreen extends StatelessWidget {
   const HseScreen({super.key});
@@ -57,42 +63,82 @@ class _JsaTab extends StatefulWidget {
 
 class _JsaTabState extends State<_JsaTab> {
   final _activityCtrl = TextEditingController();
+  final _projectCtrl = TextEditingController();
+  Map<String, Object?>? _environment;
   final List<_JsaStep> _steps = [_JsaStep()];
   bool _saving = false;
 
   Future<void> _generate() async {
     if (_activityCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter the activity name.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter the activity name.')));
       return;
     }
     setState(() => _saving = true);
     try {
       final stepsData = _steps
-          .map((s) => {
-                'step': s.step.text,
-                'hazard': s.hazard.text,
-                'risk': s.risk.text,
-                'control': s.control.text,
-              })
+          .map(
+            (s) => {
+              'step': s.step.text,
+              'hazard': s.hazard.text,
+              'risk': s.risk.text,
+              'control': s.control.text,
+            },
+          )
           .toList();
 
-      final file = await PdfService.generateJsaPdf(activity: _activityCtrl.text, steps: stepsData);
-
-      await SqliteHelper.instance.insert('SafetyRecords', {
-        'recordType': 'JSA',
-        'title': _activityCtrl.text,
-        'detailsJson': stepsData.toString(),
-        'createdAt': DateTime.now().toIso8601String(),
-      });
-      await SqliteHelper.instance.insert('Reports', {
-        'reportType': 'JSA',
-        'title': _activityCtrl.text,
-        'filePath': file.path,
-        'createdAt': DateTime.now().toIso8601String(),
-      });
+      final environment = await BackupService.withDatabases(
+        (db) => EnvironmentRepository.resolveAttachment(
+          db,
+          _environment,
+          _projectCtrl.text,
+        ),
+      );
+      final file = await PdfService.generateJsaPdf(
+        activity: _activityCtrl.text,
+        steps: stepsData,
+        project: _projectCtrl.text,
+        environmentSummary: EnvironmentRepository.summary(environment),
+      );
+      await BackupService.withDatabases(
+        (db) => db.transaction((tx) async {
+          final frozenEnvironment =
+              await EnvironmentRepository.resolveAttachment(
+                tx,
+                _environment,
+                _projectCtrl.text,
+              );
+          await tx.insert('SafetyRecords', {
+            'recordType': 'JSA',
+            'title': _activityCtrl.text,
+            'detailsJson': jsonEncode({
+              'version': 1,
+              'project': _projectCtrl.text,
+              'steps': stepsData,
+              'environment': frozenEnvironment,
+            }),
+            'createdAt': DateTime.now().toUtc().toIso8601String(),
+          });
+          await tx.insert('Reports', {
+            'reportType': 'JSA',
+            'title': _activityCtrl.text,
+            'filePath': file.path,
+            'createdAt': DateTime.now().toUtc().toIso8601String(),
+          });
+        }),
+      );
 
       if (!mounted) return;
-      await Printing.sharePdf(bytes: await file.readAsBytes(), filename: file.path.split('/').last);
+      await Printing.sharePdf(
+        bytes: await file.readAsBytes(),
+        filename: file.path.split('/').last,
+      );
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('JSA could not be saved: $e')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -105,8 +151,20 @@ class _JsaTabState extends State<_JsaTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(controller: _activityCtrl, decoration: const InputDecoration(labelText: 'Activity')),
+          TextField(
+            controller: _activityCtrl,
+            decoration: const InputDecoration(labelText: 'Activity'),
+          ),
           const SizedBox(height: 12),
+          TextField(
+            controller: _projectCtrl,
+            decoration: const InputDecoration(labelText: 'Project / site'),
+          ),
+          EnvironmentAttachment(
+            value: _environment,
+            project: _projectCtrl.text,
+            onChanged: (value) => setState(() => _environment = value),
+          ),
           for (int i = 0; i < _steps.length; i++) _buildStepCard(i),
           OutlinedButton.icon(
             onPressed: () => setState(() => _steps.add(_JsaStep())),
@@ -132,22 +190,42 @@ class _JsaTabState extends State<_JsaTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(children: [
-              Text('Step ${i + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
-              const Spacer(),
-              if (_steps.length > 1)
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                  onPressed: () => setState(() => _steps.removeAt(i)),
+            Row(
+              children: [
+                Text(
+                  'Step ${i + 1}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-            ]),
-            TextField(controller: s.step, decoration: const InputDecoration(labelText: 'Work Step')),
+                const Spacer(),
+                if (_steps.length > 1)
+                  IconButton(
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.redAccent,
+                    ),
+                    onPressed: () => setState(() => _steps.removeAt(i)),
+                  ),
+              ],
+            ),
+            TextField(
+              controller: s.step,
+              decoration: const InputDecoration(labelText: 'Work Step'),
+            ),
             const SizedBox(height: 8),
-            TextField(controller: s.hazard, decoration: const InputDecoration(labelText: 'Hazard')),
+            TextField(
+              controller: s.hazard,
+              decoration: const InputDecoration(labelText: 'Hazard'),
+            ),
             const SizedBox(height: 8),
-            TextField(controller: s.risk, decoration: const InputDecoration(labelText: 'Risk')),
+            TextField(
+              controller: s.risk,
+              decoration: const InputDecoration(labelText: 'Risk'),
+            ),
             const SizedBox(height: 8),
-            TextField(controller: s.control, decoration: const InputDecoration(labelText: 'Control Measure')),
+            TextField(
+              controller: s.control,
+              decoration: const InputDecoration(labelText: 'Control Measure'),
+            ),
           ],
         ),
       ),
@@ -197,7 +275,10 @@ class _RiskAssessmentTabState extends State<_RiskAssessmentTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Probability: $_probability', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            'Probability: $_probability',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           Slider(
             value: _probability.toDouble(),
             min: 1,
@@ -208,7 +289,10 @@ class _RiskAssessmentTabState extends State<_RiskAssessmentTab> {
             onChanged: (v) => setState(() => _probability = v.round()),
           ),
           const SizedBox(height: 8),
-          Text('Severity: $_severity', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            'Severity: $_severity',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           Slider(
             value: _severity.toDouble(),
             min: 1,
@@ -237,7 +321,11 @@ class _RiskAssessmentTabState extends State<_RiskAssessmentTab> {
                     child: Center(
                       child: Text(
                         'RISK LEVEL: $level',
-                        style: TextStyle(color: _riskColor(level), fontWeight: FontWeight.w900, fontSize: 18),
+                        style: TextStyle(
+                          color: _riskColor(level),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
                   ),
@@ -262,24 +350,32 @@ class _ToolboxTalkTab extends StatefulWidget {
 
 class _ToolboxTalkTabState extends State<_ToolboxTalkTab> {
   final _topicCtrl = TextEditingController();
-  final _dateCtrl = TextEditingController(text: DateFormat('yyyy-MM-dd').format(DateTime.now()));
+  final _dateCtrl = TextEditingController(
+    text: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+  );
   final _supervisorCtrl = TextEditingController();
   final _attendanceCtrl = TextEditingController();
 
   Future<void> _save() async {
     if (_topicCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a topic.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Enter a topic.')));
       return;
     }
     await SqliteHelper.instance.insert('SafetyRecords', {
       'recordType': 'Toolbox Talk',
       'title': _topicCtrl.text,
-      'detailsJson':
-          '{"date":"${_dateCtrl.text}","supervisor":"${_supervisorCtrl.text}","attendance":"${_attendanceCtrl.text}"}',
+      'detailsJson': jsonEncode({
+        'date': _dateCtrl.text,
+        'supervisor': _supervisorCtrl.text,
+        'attendance': _attendanceCtrl.text,
+      }),
       'createdAt': DateTime.now().toIso8601String(),
     });
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Toolbox talk record saved.')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Toolbox talk record saved.')));
     _topicCtrl.clear();
     _supervisorCtrl.clear();
     _attendanceCtrl.clear();
@@ -292,19 +388,33 @@ class _ToolboxTalkTabState extends State<_ToolboxTalkTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(controller: _topicCtrl, decoration: const InputDecoration(labelText: 'Topic')),
+          TextField(
+            controller: _topicCtrl,
+            decoration: const InputDecoration(labelText: 'Topic'),
+          ),
           const SizedBox(height: 12),
-          TextField(controller: _dateCtrl, decoration: const InputDecoration(labelText: 'Date')),
+          TextField(
+            controller: _dateCtrl,
+            decoration: const InputDecoration(labelText: 'Date'),
+          ),
           const SizedBox(height: 12),
-          TextField(controller: _supervisorCtrl, decoration: const InputDecoration(labelText: 'Supervisor')),
+          TextField(
+            controller: _supervisorCtrl,
+            decoration: const InputDecoration(labelText: 'Supervisor'),
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: _attendanceCtrl,
             maxLines: 4,
-            decoration: const InputDecoration(labelText: 'Attendance (names, comma separated)'),
+            decoration: const InputDecoration(
+              labelText: 'Attendance (names, comma separated)',
+            ),
           ),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: _save, child: const Text('SAVE TOOLBOX TALK')),
+          ElevatedButton(
+            onPressed: _save,
+            child: const Text('SAVE TOOLBOX TALK'),
+          ),
         ],
       ),
     );
@@ -351,7 +461,9 @@ class _InspectionTabState extends State<_InspectionTab> {
   }
 
   void _resetChecks() {
-    final items = _checklistType == 'Crane Checklist' ? _craneItems : _riggingItems;
+    final items = _checklistType == 'Crane Checklist'
+        ? _craneItems
+        : _riggingItems;
     _checks = {for (final i in items) i: false};
   }
 
@@ -361,12 +473,14 @@ class _InspectionTabState extends State<_InspectionTab> {
     await SqliteHelper.instance.insert('SafetyRecords', {
       'recordType': 'Inspection Checklist',
       'title': _checklistType,
-      'detailsJson': _checks.toString(),
+      'detailsJson': jsonEncode(_checks),
       'createdAt': DateTime.now().toIso8601String(),
     });
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Checklist saved: $passed / $total items passed.')),
+      SnackBar(
+        content: Text('Checklist saved: $passed / $total items passed.'),
+      ),
     );
   }
 
@@ -392,18 +506,23 @@ class _InspectionTabState extends State<_InspectionTab> {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: _checks.keys
-                .map((k) => CheckboxListTile(
-                      value: _checks[k],
-                      title: Text(k),
-                      activeColor: AppColors.safetyOrange,
-                      onChanged: (v) => setState(() => _checks[k] = v ?? false),
-                    ))
+                .map(
+                  (k) => CheckboxListTile(
+                    value: _checks[k],
+                    title: Text(k),
+                    activeColor: AppColors.safetyOrange,
+                    onChanged: (v) => setState(() => _checks[k] = v ?? false),
+                  ),
+                )
                 .toList(),
           ),
         ),
         Padding(
           padding: const EdgeInsets.all(16),
-          child: ElevatedButton(onPressed: _save, child: const Text('SAVE CHECKLIST')),
+          child: ElevatedButton(
+            onPressed: _save,
+            child: const Text('SAVE CHECKLIST'),
+          ),
         ),
       ],
     );

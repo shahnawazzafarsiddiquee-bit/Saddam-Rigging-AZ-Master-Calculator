@@ -167,6 +167,7 @@ This is not completion of all 113 requested requirements. The authoritative
 row-by-row status is in `docs/upgrade/FEATURE_MATRIX.md`.
 
 - Phase 7 source 2c9450e, run 39182175553: 136 tests, debug APK, optimized universal APK, AAB and native same-key update/backup passed.
+- Phase 8 run 39564576329, source a681430: 146 tests, debug/universal APK, AAB and native same-key update/backup passed (versionCode 1023).
 - Phase 8 upgrades the existing chart editor/Finder with explicit weights, verified source/configuration metadata, exact chart rows and archived prior revisions. Latest build gate is recorded in `docs/upgrade/TEST_REPORT.md`.
 - Inspection/quarantine, eligible lift assets, smart radius, manual environment/wind snapshots, ground/mat records and PDF summaries use the existing design and database.
 - Native update checks preserve all 12 tables and photos using isolated fixtures signed with the same test key. They do not prove compatibility with the published APK signed by a different key.

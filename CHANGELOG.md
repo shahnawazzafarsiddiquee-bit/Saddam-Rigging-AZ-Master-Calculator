@@ -38,5 +38,5 @@
 - Native 12-table same-key update and real SQLite restore/rollback passed.
 - Visual run 39095404794: rendered dashboard/equipment/synthetic screenshots passed.
 - No schema migration, production-device data deletion or main-branch merge.
-- Phase 7 run 39182175553: 136 tests, universal APK/AAB and native preservation passed. Phase 8 latest gate is in the test report.
+- Phase 7 run 39182175553: 136 tests, universal APK/AAB and native preservation passed. Phase 8 run 39564576329: 146 tests, universal APK/AAB and native preservation passed (versionCode 1023).
 - Full enterprise scope remains pending; see docs/upgrade/FEATURE_MATRIX.md.

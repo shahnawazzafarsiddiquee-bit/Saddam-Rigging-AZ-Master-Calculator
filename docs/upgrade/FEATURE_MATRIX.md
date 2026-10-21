@@ -2,7 +2,7 @@
 
 One combined application. This matrix tracks all 113 requested requirements; a row marked Partial is not a completed enterprise module.
 
-Verified through Phase 7: run 39182175553, source 2c9450e, 136 tests, debug/universal APK and AAB, native same-key update and backup/rollback passed. Phase 8 chart/finder work is under build validation; see TEST_REPORT.md for the latest gate.
+Verified Phase 8: run 39564576329, source a68143004001e4d5fc8abe292479d2ee55ff4f61, 146 tests, debug/universal APK and AAB, native same-key update and backup/rollback passed. VersionCode 1023. Owner-signed exports retain the exact application payload. See TEST_REPORT.md for limits.
 
 | # | Feature | Existing | Upgraded | New | Tested | Status |
 |---|---|---|---|---|---|---|
@@ -14,9 +14,9 @@ Verified through Phase 7: run 39182175553, source 2c9450e, 136 tests, debug/univ
 | 6 | Smart radius | Partial | Yes | Yes | Partial | Existing boom route supports manual, site coordinates, scaled drawing and offset boom geometry with field-verification record. GPS is not used for radius; AR pending. |
 | 7 | Pick/max/set radius | No | No | Yes | Yes | Separate calculated and independently verified pick/maximum/set values with verifier/time; maximum must cover endpoints. Full lift-wizard attachment remains pending. |
 | 8 | Boom geometry | Partial | Yes | Yes | Partial | Shared geometry and diagram retained; manufacturer geometry override prohibited; height/offset boundaries tested. |
-| 9 | Crane charts | Partial | Yes | Yes | Pending latest gate | Source/configuration metadata, exact rows, verified OCR draft, persistent imported document and archived old rows on replacement/withdrawal; no assumed interpolation. Field OCR review pending. |
+| 9 | Crane charts | Partial | Yes | Yes | Partial | Source/configuration metadata, exact rows, verified OCR draft, persistent imported document and archived old rows on replacement/withdrawal; no assumed interpolation. Field OCR review pending. |
 | 10 | Gross hook load and utilization | Partial | Yes | Yes | Yes | Shared gross-load and utilization engine; explicit accessory/hook masses; verified source gate |
-| 11 | Crane finder | Partial | Yes | No | Pending latest gate | Actual gross mass, exact pick/max/set matches and registered inspected/certified crane filter; recommendations require final confirmation. Height/clearance and availability scheduling not automated. |
+| 11 | Crane finder | Partial | Yes | No | Partial | Actual gross mass, exact pick/max/set matches and registered inspected/certified crane filter; recommendations require final confirmation. Height/clearance and availability scheduling not automated. |
 | 12 | Ground bearing | Partial | Yes | Yes | Yes | Manufacturer reaction or identified engineering estimate, canonical pressure/mat math, immutable records and frozen lift attachment; no self-weight-based guessed reaction. |
 | 13 | Verified ground source | No | No | Yes | Yes | Source/revision/approver inputs and verification gates in existing ground screen |
 | 14 | Outrigger mats | Partial | Yes | Yes | Partial | Pad/mat dimensions, thickness/type/count and scaled plan drawing; quantity does not inflate single-outrigger area. Structural mat adequacy still requires engineering verification. |
@@ -103,17 +103,17 @@ Verified through Phase 7: run 39182175553, source 2c9450e, 136 tests, debug/univ
 | 95 | Calculation engine | No | No | Yes | Yes | Dedicated tested engine; remaining legacy UI calculations still need integration |
 | 96 | Units | Partial | Yes | Yes | Yes | Canonical units and converter tested; app-wide unit preference and remaining legacy integration pending |
 | 97 | Validation | Partial | Yes | Yes | Partial | Finite/domain/overflow checks in upgraded calculators; all assets/permits not yet gated |
-| 98 | Automated calculation tests | No | No | Yes | Yes | 136 tests passed through Phase 7; new chart/finder tests in the latest gate. Native same-key update and backup also verified separately. |
+| 98 | Automated calculation tests | No | No | Yes | Yes | 146 tests passed through Phase 8, including chart/finder and transaction regression. Native same-key update and backup also verified separately. |
 | 99 | Edge tests | No | No | Yes | Partial | Angles, zero/missing ratings, overload, CG, source gates tested; device outages pending |
 | 100 | Visual regression | No | No | Yes | Partial | Original palette assertions, 53 screen constructions and native dashboard/equipment/synthetic screenshots pass; full pixel regression pending |
-| 101 | Migration tests | No | No | Yes | Partial | 12-table IDs/photos and native same-key update/rollback pass through Phase 7. Owner key differs from published APK; production device migration unverified. |
+| 101 | Migration tests | No | No | Yes | Partial | 12-table IDs/photos and native same-key update/rollback pass through Phase 8. Owner key differs from published APK; production device migration unverified. |
 | 102 | Performance | Partial | No | No | No | Audit mapped; upgrade pending |
 | 103 | Security | Partial | No | No | No | Audit mapped; upgrade pending |
 | 104 | Weather key security | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 105 | Incomplete-data handling | Partial | Yes | Yes | Partial | Upgraded modules display incomplete until source verification; legacy modules remain to audit |
 | 106 | Human authorization | Partial | Yes | Yes | Partial | Engine results always require human authorization; full role workflow pending |
 | 107 | Feature flags | No | No | No | No | Implementation pending |
-| 108 | Phased delivery | No | No | Yes | Partial | Phases 0-7 built/tested, Phase 8 under validation; later enterprise phases incomplete. Each deliverable remains one combined app. |
+| 108 | Phased delivery | No | No | Yes | Partial | Phases 0-8 checkpoints built/tested; later enterprise phases incomplete. Each deliverable remains one combined app. |
 | 109 | Preserve existing features | Partial | Yes | No | Partial | Existing screens/routes retained; no schema deletion or redesign; broader regression pending |
 | 110 | Feature matrix | No | No | Yes | Manual | All 113 requirements tracked; partial items explicitly identified |
 | 111 | Deliverables | No | No | Yes | Partial | Existing source branch and draft PR5; combined universal APK/AAB build pipeline; owner signing does not establish published-key update compatibility. |

@@ -47,6 +47,15 @@ New inspection metadata has a named offline attestation; it is not an authentica
 
 These package milestones supersede the older ARM64-only 1012 package note above. Analyzer warnings/information remain non-fatal; no claim of warning-free lint or complete physical-device certification is made.
 
-## Phase 8 gate in progress
+## Phase 8 verified combined build
 
-Source feeb55ac5ab64d2ddf580913f61954a1e50ed981; run 39564123210. Tests cover exact chart rows, all path radii, source metadata, asset/config matching, old chart archive and transaction rollback, missing weights and typed crane input. Current gate result must be recorded before declaring these tests or packages passed.
+Run **39564576329**, source **a68143004001e4d5fc8abe292479d2ee55ff4f61**, versionCode **1023**: all four jobs passed (verify, baseline-fixed-key, packages, android-device).
+
+- **146 unit/widget tests passed.** Static analysis completed with 110 non-fatal warnings/information, not zero-warning lint.
+- Debug APK compiled and its fixed test certificate verified.
+- Optimized universal release APK (arm64-v8a, armeabi-v7a, x86_64) and AAB compiled.
+- Android API35 emulator installed the baseline, updated without uninstalling using the same test key, and verified all 12 tables, IDs and photo bytes. Native SQLite backup round-trip and failure rollback integration passed.
+- New tests cover incomplete/mixed chart provenance, exact row matching, duplicate/nonfinite values, all required radii, eligible-asset/configuration gates, archive preservation, transactional rollback, missing actual weights and typed crane-command inputs.
+- Earlier run 39564123210 passed 145 tests; the one failure was a lazy-list phone test not scrolling far enough to create the Finder button. The test now scrolls the actual scrollable to the button. No calculation assertion or safety gate was disabled.
+
+The emulator validates the test-signed debug build, not owner-key installation on the user's phone. Owner-signed release export is separately checked with apksigner/jarsigner, ZIP CRC, SHA256 and byte-identical non-signature payload comparison. Published-key mismatch remains unresolved. This checkpoint does not complete all 113 requirements. See the matrix for pending modules and hardware/provider/template requirements.

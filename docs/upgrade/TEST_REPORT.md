@@ -37,3 +37,16 @@ The exact original Critical Lift Plan PDF was not supplied. Overlay/autofill and
 Run 39110248646, source 748a0e510b82bd8d4a16bd4578c175c198f3e536: analysis, **110 tests**, debug APK and fixed-key signature verification passed. Eight new tests exercise failure quarantine, incomplete/all-N/A HOLD, PASS preserving quarantine, late cross-database rollback, malformed answers/unknown assets, stale quarantine at lift save, missing/expired certificates, and atomic selected-equipment snapshots. Native device and release-package jobs were not requested in this run.
 
 New inspection metadata has a named offline attestation; it is not an authenticated digital signature. No schema version change. This phase does not complete every inspection/approval/permit requirement.
+
+## Phase 5–7 verified checkpoints
+
+- Phase 5 run 39130127425, source 2897f8bee047a777f52929e92adf3b7b91ab9f49: 117 tests and debug APK passed. Manual/site/drawing/boom radius, field verification and input invalidation covered.
+- Phase 6 run 39152985627, source 128b78bb21ca3da39902730e2c54877dbbfbd5b2: 126 tests, debug APK, optimized universal APK, AAB and native same-key update/backup passed; versionCode 1019. Wind source/freshness/limits, frozen attachments and missing/stale/project-mismatch checks covered.
+- Phase 7 run 39182175553, source 2c9450e903596363281b35a2ba369c9542d7bef7: **136 tests**, debug APK, optimized universal APK, AAB and native same-key update/backup passed; versionCode 1021. Ground boundaries, missing data, source/estimate status, pad geometry, mat quantity, no double-counted reference mass, immutable records, multipage PDF and phone form covered.
+- Phase 7's earlier phone test was corrected to unfocus the keyboard and use a real phone viewport before tapping Calculate; the rerun passed. No production calculation assertion was disabled.
+
+These package milestones supersede the older ARM64-only 1012 package note above. Analyzer warnings/information remain non-fatal; no claim of warning-free lint or complete physical-device certification is made.
+
+## Phase 8 gate in progress
+
+Source feeb55ac5ab64d2ddf580913f61954a1e50ed981; run 39564123210. Tests cover exact chart rows, all path radii, source metadata, asset/config matching, old chart archive and transaction rollback, missing weights and typed crane input. Current gate result must be recorded before declaring these tests or packages passed.

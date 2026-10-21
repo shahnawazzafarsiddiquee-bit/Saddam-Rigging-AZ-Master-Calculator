@@ -1,25 +1,26 @@
 # Upgrade feature matrix
 
-Checkpoint: 102 tests and APK/AAB builds passed in run 39092858778; native same-key update/backup and visual run 39095404794 passed. Yes/Partial refers to the described work only, not completion of the entire professional module. Status is authoritative.
-Phase 4: run 39110248646 passed analysis, 110 tests and debug APK at 748a0e510b82bd8d4a16bd4578c175c198f3e536. Later radius work has its own build gate.
+One combined application. This matrix tracks all 113 requested requirements; a row marked Partial is not a completed enterprise module.
+
+Verified through Phase 7: run 39182175553, source 2c9450e, 136 tests, debug/universal APK and AAB, native same-key update and backup/rollback passed. Phase 8 chart/finder work is under build validation; see TEST_REPORT.md for the latest gate.
 
 | # | Feature | Existing | Upgraded | New | Tested | Status |
 |---|---|---|---|---|---|---|
 | 1 | Main navigation | Partial | No | No | No | Audit mapped; upgrade pending |
 | 2 | Smart home dashboard | Partial | No | No | No | Audit mapped; upgrade pending |
-| 3 | Site environment snapshot | No | No | No | No | Implementation pending |
-| 4 | Wind module | Partial | Yes | No | Partial | Universal limits removed; full configured wind/weather/BLE remains pending |
-| 5 | BLE anemometer | No | No | No | No | Pending implementation and external configuration/template/device evidence |
-| 6 | Smart radius | No | No | No | No | Implementation pending |
-| 7 | Pick/max/set radius | No | No | No | No | Implementation pending |
-| 8 | Boom geometry | Partial | No | No | No | Audit mapped; upgrade pending |
-| 9 | Crane charts | Partial | Yes | No | Yes | Representative chart explicitly unverified; exact rows only; manufacturer import/configuration still pending |
+| 3 | Site environment snapshot | No | Yes | Yes | Partial | Reusable point-in-time snapshot, optional permission-based Android GPS/manual fallback, connectivity, manual weather and wind; frozen links in lift/inspection/JSA. Real GPS field testing pending. |
+| 4 | Wind module | Partial | Yes | Yes | Partial | Manual speed/gust/direction/source/time and documented limits with age checks; stored snapshots and PDF. Weather/BLE are interfaces, not active integrations; no background live monitoring. |
+| 5 | BLE anemometer | No | No | Yes | Partial | WindProvider interface and tested BLE/weather/manual source priority; actual device discovery, pairing and protocol decoder pending. |
+| 6 | Smart radius | Partial | Yes | Yes | Partial | Existing boom route supports manual, site coordinates, scaled drawing and offset boom geometry with field-verification record. GPS is not used for radius; AR pending. |
+| 7 | Pick/max/set radius | No | No | Yes | Yes | Separate calculated and independently verified pick/maximum/set values with verifier/time; maximum must cover endpoints. Full lift-wizard attachment remains pending. |
+| 8 | Boom geometry | Partial | Yes | Yes | Partial | Shared geometry and diagram retained; manufacturer geometry override prohibited; height/offset boundaries tested. |
+| 9 | Crane charts | Partial | Yes | Yes | Pending latest gate | Source/configuration metadata, exact rows, verified OCR draft, persistent imported document and archived old rows on replacement/withdrawal; no assumed interpolation. Field OCR review pending. |
 | 10 | Gross hook load and utilization | Partial | Yes | Yes | Yes | Shared gross-load and utilization engine; explicit accessory/hook masses; verified source gate |
-| 11 | Crane finder | Partial | No | No | No | Audit mapped; upgrade pending |
-| 12 | Ground bearing | Partial | Yes | Yes | Yes | Shared pressure/mat math; existing form upgraded; soil/engineering approval still external |
+| 11 | Crane finder | Partial | Yes | No | Pending latest gate | Actual gross mass, exact pick/max/set matches and registered inspected/certified crane filter; recommendations require final confirmation. Height/clearance and availability scheduling not automated. |
+| 12 | Ground bearing | Partial | Yes | Yes | Yes | Manufacturer reaction or identified engineering estimate, canonical pressure/mat math, immutable records and frozen lift attachment; no self-weight-based guessed reaction. |
 | 13 | Verified ground source | No | No | Yes | Yes | Source/revision/approver inputs and verification gates in existing ground screen |
-| 14 | Outrigger mats | Partial | Yes | Yes | Partial | Required/provided area and utilization math tested; structural mat design/drawing pending |
-| 15 | Outrigger reaction | No | No | No | No | Implementation pending |
+| 14 | Outrigger mats | Partial | Yes | Yes | Partial | Pad/mat dimensions, thickness/type/count and scaled plan drawing; quantity does not inflate single-outrigger area. Structural mat adequacy still requires engineering verification. |
+| 15 | Outrigger reaction | No | No | Yes | Yes | Explicit sourced manufacturer or engineering-estimate reaction with crane/configuration/quadrant; no generated reaction or GPS soil capacity. |
 | 16 | Crane visualizer | Partial | No | No | No | Audit mapped; upgrade pending |
 | 17 | Synthetic sling | Partial | Yes | Yes | Partial | Existing form upgraded with tag/configuration/source verification and tested assembly-factor math; complete asset linkage pending |
 | 18 | Web sling | Partial | Yes | Yes | Partial | Vertical/choker/basket/double-basket/bridle with supplied approved assembly factor; no universal rating assumed |
@@ -65,7 +66,7 @@ Phase 4: run 39110248646 passed analysis, 110 tests and debug APK at 748a0e510b8
 | 58 | Exclusion zone | No | No | No | No | Implementation pending |
 | 59 | Crane inspection | Partial | Yes | No | Partial | Crane pre-use checklist added to existing inspection workflow; configured permit gating pending |
 | 60 | Permit to lift | No | No | No | No | Implementation pending |
-| 61 | JSA | Partial | No | No | No | Audit mapped; upgrade pending |
+| 61 | JSA | Partial | Yes | No | Partial | Existing JSA can retain a frozen site/environment snapshot; complete risk/signature workflow pending. |
 | 62 | TBT | Partial | No | No | No | Audit mapped; upgrade pending |
 | 63 | Hand signals | No | No | No | No | Implementation pending |
 | 64 | Near miss | No | No | No | No | Implementation pending |
@@ -74,7 +75,7 @@ Phase 4: run 39110248646 passed analysis, 110 tests and debug APK at 748a0e510b8
 | 67 | Approval workflow | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 68 | Digital signature | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 69 | Revisions | Partial | No | No | No | Audit mapped; upgrade pending |
-| 70 | Audit trail | No | Yes | Yes | Partial | Inspection/quarantine audit and Lift Equipment snapshots atomic; complete application-wide audit pending |
+| 70 | Audit trail | No | Yes | Yes | Partial | Inspection/quarantine events, frozen lift snapshots, and chart revision archive; application-wide audit/approval identity pending. |
 | 71 | Exact PDF template | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 72 | PDF autofill | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 73 | PDF visual test | No | No | No | No | Pending implementation and external configuration/template/device evidence |
@@ -94,7 +95,7 @@ Phase 4: run 39110248646 passed analysis, 110 tests and debug APK at 748a0e510b8
 | 87 | Excel/CSV export | No | No | No | No | Implementation pending |
 | 88 | Global search | Partial | No | No | No | Audit mapped; upgrade pending |
 | 89 | Translations | No | No | No | No | Pending implementation and external configuration/template/device evidence |
-| 90 | Voice entry | Partial | Yes | No | Partial | Typed wind command no longer uses universal limits; actual speech input pending |
+| 90 | Voice entry | Partial | Yes | No | Partial | Existing typed/keyboard-mic command shows parsed crane values and routes missing data to Finder; no guessed 0.5-ton rigging or automatic rope selection. Dedicated speech integration pending. |
 | 91 | Notifications | Partial | No | No | No | Audit mapped; upgrade pending |
 | 92 | AI assistant | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 93 | Approved library | No | No | No | No | Pending implementation and external configuration/template/device evidence |
@@ -102,19 +103,19 @@ Phase 4: run 39110248646 passed analysis, 110 tests and debug APK at 748a0e510b8
 | 95 | Calculation engine | No | No | Yes | Yes | Dedicated tested engine; remaining legacy UI calculations still need integration |
 | 96 | Units | Partial | Yes | Yes | Yes | Canonical units and converter tested; app-wide unit preference and remaining legacy integration pending |
 | 97 | Validation | Partial | Yes | Yes | Partial | Finite/domain/overflow checks in upgraded calculators; all assets/permits not yet gated |
-| 98 | Automated calculation tests | No | No | Yes | Yes | 102 unit/widget tests passed; separate native backup and visual checks passed |
+| 98 | Automated calculation tests | No | No | Yes | Yes | 136 tests passed through Phase 7; new chart/finder tests in the latest gate. Native same-key update and backup also verified separately. |
 | 99 | Edge tests | No | No | Yes | Partial | Angles, zero/missing ratings, overload, CG, source gates tested; device outages pending |
 | 100 | Visual regression | No | No | Yes | Partial | Original palette assertions, 53 screen constructions and native dashboard/equipment/synthetic screenshots pass; full pixel regression pending |
-| 101 | Migration tests | No | No | Yes | Partial | 12-table IDs/photo blobs, real Android backup/rollback and same-key in-place update passed; published-key/production device unavailable |
+| 101 | Migration tests | No | No | Yes | Partial | 12-table IDs/photos and native same-key update/rollback pass through Phase 7. Owner key differs from published APK; production device migration unverified. |
 | 102 | Performance | Partial | No | No | No | Audit mapped; upgrade pending |
 | 103 | Security | Partial | No | No | No | Audit mapped; upgrade pending |
 | 104 | Weather key security | No | No | No | No | Pending implementation and external configuration/template/device evidence |
 | 105 | Incomplete-data handling | Partial | Yes | Yes | Partial | Upgraded modules display incomplete until source verification; legacy modules remain to audit |
 | 106 | Human authorization | Partial | Yes | Yes | Partial | Engine results always require human authorization; full role workflow pending |
 | 107 | Feature flags | No | No | No | No | Implementation pending |
-| 108 | Phased delivery | No | No | Yes | Partial | Baseline, backup/calculation and synthetic/legacy asset checkpoints built/tested; later phases pending |
+| 108 | Phased delivery | No | No | Yes | Partial | Phases 0-7 built/tested, Phase 8 under validation; later enterprise phases incomplete. Each deliverable remains one combined app. |
 | 109 | Preserve existing features | Partial | Yes | No | Partial | Existing screens/routes retained; no schema deletion or redesign; broader regression pending |
 | 110 | Feature matrix | No | No | Yes | Manual | All 113 requirements tracked; partial items explicitly identified |
-| 111 | Deliverables | No | No | Yes | Partial | Source branch, draft PR5, debug APK, test-signed ARM64 APK/AAB, reports and screenshots; production signing pending |
+| 111 | Deliverables | No | No | Yes | Partial | Existing source branch and draft PR5; combined universal APK/AAB build pipeline; owner signing does not establish published-key update compatibility. |
 | 112 | Final report | No | No | Yes | Partial | Checkpoint report delivered; full enterprise completion pending |
 | 113 | Decision-support limits | Partial | Yes | Yes | Partial | Source/assumption/warning detail in shared result UI; broader legacy checks still pending |

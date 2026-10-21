@@ -70,3 +70,11 @@ It differs from both the published APK and repository test certificate. It may s
 ## Phase 4 storage changes
 
 Existing `pro2.inspections.details` keeps original answer lines with a versioned META JSON suffix; existing viewers retain legacy support. Photos remain in `pro2.photos`. Existing main `SafetyRecords` stores equipment audit and immutable lift-equipment snapshots. All tables/IDs/schema versions remain unchanged. New inspection history is retained; PASS cannot release restricted equipment. Transactions use the same serialized attachment guard as backup/restore.
+
+## Phase 5–8 additive records
+
+Schema versions and all 12 tables remain unchanged. Radius, environment and ground records use existing SafetyRecords JSON. Lift Equipment records additionally hold immutable environment/ground snapshots resolved inside the save transaction; wrong project, missing source record or changed timestamp blocks attachment. Inspection/JSA retain environment snapshots in their existing metadata.
+
+Chart verification is versioned JSON in the existing pro.chart.note field. Legacy text/rows remain readable but unverified. Editing/renaming/withdrawing a chart archives complete prior rows, IDs and notes to SafetyRecords before removing the active selection, in the same attached-database transaction. A failed insertion rolls back the whole change. No approved chart is silently overwritten without a retained archive. Imported chart documents live in app documents; backups retain their paths, not their bytes. Copy those documents separately when transferring devices.
+
+Native preservation and backup/rollback were rerun successfully at Phase 6 and Phase 7. The owner-key versus published-key mismatch remains unresolved and is independent of schema preservation.

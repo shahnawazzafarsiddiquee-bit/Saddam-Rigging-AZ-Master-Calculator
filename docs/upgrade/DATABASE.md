@@ -88,3 +88,7 @@ are validated before deletion. A recovery snapshot precedes restore. Multi-file
 restore supports DELETE/TRUNCATE/PERSIST rollback journals and refuses WAL
 before changing records. New schema versions must extend the backup format and
 frozen migration tests; never replace the released fixture with new schemas.
+
+## Additive upgrade payloads
+
+SafetyRecords holds versioned JSON for radius records, Site Environment, Ground Bearing, Lift Equipment snapshots, equipment audit and Crane Chart Archive. Each retains the original createdAt value and captured values. Chart Archive includes reason (REPLACED/WITHDRAWN) and complete former pro.chart rows including IDs/source notes. Active chart notes use RIGSAFE_CHART_V1 JSON with asset/configuration/manufacturer/source/document/page/table/revision and named manual verification. Existing plain text chart notes remain readable but cannot pass the verified-chart gate. No new table or schema version is introduced.

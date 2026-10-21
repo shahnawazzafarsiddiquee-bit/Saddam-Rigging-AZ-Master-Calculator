@@ -25,4 +25,8 @@ a Play release needs the owner's private upload signing configuration.
 
 ## Release compatibility gate
 
-Delivered checkpoint packages use versionCode 1012 and the repository test key. Before production publishing, use the correct original/private release signing key and a monotonically higher versionCode. The main workflow's old run-number counter is not sufficient after installing 1012. No production publishing is performed by this checkpoint.
+CI uses versionCode 1000 + the upgrade workflow run number and the repository test key. Phase 7 is 1021. Owner-signed exports use the privately supplied key, whose certificate differs from the published APK. Before production publishing, use the correct original/private release signing key and a monotonically higher versionCode. The main workflow's old run-number counter is not sufficient after installing 1012. No production publishing is performed by this checkpoint.
+
+## Environment implementation
+
+Manual wind/temperature/humidity/weather observations work offline. Native Android GPS is optional and requested only from the location control, with a timeout and manual fallback. WindProvider defines BLE/weather/manual readings, timestamps and connected state; no vendor GATT decoder or weather endpoint is enabled. Limits require manufacturer/company/project source and approver inputs. No API key is needed for manual operation. Snapshot records are not a live monitoring or alarm service.

@@ -93,7 +93,7 @@ void main(){
     addTearDown(tester.view.resetPhysicalSize);addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(home:CraneFinderScreen()));
     final button=find.widgetWithText(ElevatedButton,'Crane dhundo');
-    await tester.ensureVisible(button);await tester.pumpAndSettle();await tester.tap(button);await tester.pump();
+    await tester.scrollUntilVisible(button,350,scrollable:find.byType(Scrollable).first);await tester.pumpAndSettle();await tester.tap(button);await tester.pump();
     expect(find.textContaining('Payload requires a finite value.'),findsOneWidget);
     expect(find.text('0.5'),findsNothing);
   });

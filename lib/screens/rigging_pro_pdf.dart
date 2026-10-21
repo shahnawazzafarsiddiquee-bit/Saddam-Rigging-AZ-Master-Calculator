@@ -14,7 +14,7 @@ class _LiftPlanPdfScreenState extends State<LiftPlanPdfScreen> {
   final rigger = TextEditingController();
   final oper = TextEditingController();
   final wt = TextEditingController();
-  final rig = TextEditingController(text: '0.5');
+  final rig = TextEditingController();
   final len = TextEditingController(text: '12');
   final wid = TextEditingController(text: '2.44');
   final ang = TextEditingController(text: '60');
@@ -75,7 +75,7 @@ class _LiftPlanPdfScreenState extends State<LiftPlanPdfScreen> {
     final b = _n(wid);
     final th = _n(ang);
     final kmh = _n(wind);
-    if (w <= 0 ||
+    if ([w,rg,r,a,b,th,kmh,_n(cap)].any((v)=>!v.isFinite) || rig.text.trim().isEmpty || rg<0 || kmh<0 || _n(cap)<0 || w <= 0 ||
         r <= 0 ||
         a <= 0 ||
         th <= 0 ||
@@ -85,11 +85,11 @@ class _LiftPlanPdfScreenState extends State<LiftPlanPdfScreen> {
           [const _R('Load, radius, sling length aur angle sahi daalo', 3)]);
       return;
     }
-    final warns = <String>[];
+    final warns = <String>['PRELIMINARY - verify chart configuration, source, deductions, all path radii and asset inspection/certificates. This calculation does not classify or approve a lift.'];
     final total = w + rg;
 
     double capV = 0;
-    String capSrc = 'Manual entry';
+    String capSrc = 'UNVERIFIED manual entry';
     final c = crane;
     final bm = boom;
     if (c != null && bm != null) {
@@ -102,17 +102,13 @@ class _LiftPlanPdfScreenState extends State<LiftPlanPdfScreen> {
         warns.add('Radius saved chart se bahar hai');
       }
     }
+    if(!mounted)return;
     if (capV <= 0) capV = _n(cap);
     double util = 0;
     if (capV > 0) {
       util = total / capV * 100;
       if (util > 100) {
         warns.add('OVERLOAD: crane utilization ${_f(util, 0)}%');
-      } else if (util > 85) {
-        warns.add(
-            'Crane utilization ${_f(util, 0)}% (85% se upar): critical lift, engineer approval');
-      } else if (util > 75) {
-        warns.add('Crane utilization ${_f(util, 0)}%: critical lift check');
       }
     } else {
       warns.add('Crane capacity nahi mili: load chart se verify karo');
@@ -123,11 +119,10 @@ class _LiftPlanPdfScreenState extends State<LiftPlanPdfScreen> {
     final legLen = run / math.cos(t);
     final height = run * math.tan(t);
     final tension = w / (2 * math.sin(t));
-    final pick = _pickRope(tension);
+    // Rope size cannot be selected from a generic diameter approximation.
+
     if (th < 45) warns.add('Sling angle 45 deg se kam');
-    if (pick <= 0) {
-      warns.add('Sling 52 mm se bada chahiye: spreader beam / engineer');
-    }
+
 
     final windTxt = wind.text.trim().isEmpty
         ? 'INCOMPLETE - no wind record'
@@ -140,7 +135,7 @@ class _LiftPlanPdfScreenState extends State<LiftPlanPdfScreen> {
               capV > 0
                   ? 'Crane utilization: ${_f(util, 0)}%'
                   : 'Crane capacity nahi mili',
-              capV <= 0 ? 3 : (util <= 75 ? 1 : (util <= 85 ? 2 : 3))),
+              capV <= 0 || util>100 ? 3 : 2),
           _R('Sling leg: ${_f(legLen)} m, tension ${_f(tension)} ton'),
           _R(
               warns.isEmpty
@@ -154,7 +149,7 @@ class _LiftPlanPdfScreenState extends State<LiftPlanPdfScreen> {
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(28),
       build: (pw.Context ctx) => [
-        pw.Text('LIFT PLAN',
+        pw.Text('PRELIMINARY LIFT PLAN',
             style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
         pw.Text('Date: ${_today()}'),
         _pdfSection('1. Job details', [
@@ -190,10 +185,7 @@ class _LiftPlanPdfScreenState extends State<LiftPlanPdfScreen> {
           ['Sling length per leg', '${_f(legLen)} m'],
           ['Hook height above lifting points', '${_f(height)} m'],
           ['Load per leg', '${_f(tension)} ton'],
-          [
-            'Min wire rope size (est.)',
-            pick > 0 ? '${_f(pick, 0)} mm 6x36 IWRC' : 'Above 52 mm'
-          ],
+          ['Sling selection', 'Use manufacturer rated WLL for actual hitch, angle and environment; tag/certificate verification required.'],
           [
             'Note',
             legs == 4 ? 'Only 2 legs assumed to carry load' : '2 leg sling'

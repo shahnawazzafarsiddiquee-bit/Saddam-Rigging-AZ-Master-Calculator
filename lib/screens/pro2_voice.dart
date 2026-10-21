@@ -18,26 +18,6 @@ const Map<String, double> _uFactor = {
 
 const Set<String> _uLen = {'mm', 'cm', 'm', 'inch', 'ft'};
 
-const List<double> _ropeSz = [
-  8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 44, 48, 52
-];
-
-String _rope2(double tension) {
-  final need = math.sqrt(tension * 100);
-  for (final s in _ropeSz) {
-    if (s >= need) return '${_f(s, 0)} mm (6x36 IWRC)';
-  }
-  return '52 mm se bada: spreader beam / engineer';
-}
-
-class _VC {
-  final String crane;
-  final double boom;
-  final double cap;
-  final double util;
-  _VC(this.crane, this.boom, this.cap, this.util);
-}
-
 Future<List<_R>> _runVoice(String raw) async {
   final t = raw.toLowerCase().replaceAll(',', '.').trim();
   if (t.isEmpty) return [const _R('Kuch bolo ya likho', 2)];
@@ -53,44 +33,12 @@ Future<List<_R>> _runVoice(String raw) async {
     final w = tonRe.firstMatch(t);
     final r = RegExp(r'radius\D*(\d+(?:\.\d+)?)').firstMatch(t);
     if (w != null && r != null) {
-      final load = double.parse(w.group(1)!) + 0.5;
-      final rad = double.parse(r.group(1)!);
-      final cranes = await ProDb.cranes();
-      if (cranes.isEmpty) {
-        return [const _R('Pehle Crane Load Chart save karo', 3)];
-      }
-      final list = <_VC>[];
-      for (final c in cranes) {
-        for (final b in await ProDb.booms(c)) {
-          final hit = await ProDb.lookup(c, b, rad);
-          if (hit != null) {
-            list.add(_VC(c, b, hit.capacity, load / hit.capacity * 100));
-          }
-        }
-      }
-      final ok = list.where((x) => x.util <= 100).toList();
-      ok.sort((a, b) {
-        final pa = a.util <= 75 ? 0 : 1;
-        final pb = b.util <= 75 ? 0 : 1;
-        if (pa != pb) return pa - pb;
-        if (pa == 0) return a.boom.compareTo(b.boom);
-        return a.util.compareTo(b.util);
-      });
-      final res = <_R>[
-        _R('Hook load ${_f(load)} ton (rigging 0.5 ton jodkar), radius ${_f(rad, 1)} m'),
+      final load=double.parse(w.group(1)!);
+      final rad=double.parse(r.group(1)!);
+      return [
+        _R('Recognized payload: ${_f(load)} metric tonne; radius: ${_f(rad,1)} m.',2),
+        const _R('INCOMPLETE - confirm these values in Crane Finder with actual rigging and hook-block weights, pick/path/set radii, exact configuration and valid asset records. No crane is selected from this incomplete command.',2),
       ];
-      if (ok.isEmpty) {
-        res.add(const _R('Saved charts me koi crane ye lift nahi kar sakti', 3));
-      } else {
-        final show = ok.length > 5 ? 5 : ok.length;
-        for (int i = 0; i < show; i++) {
-          final x = ok[i];
-          res.add(_R(
-              '${x.crane} | boom ${_f(x.boom, 1)} m | cap ${_f(x.cap)} t | ${_f(x.util, 0)}%',
-              x.util <= 75 ? 1 : 2));
-        }
-      }
-      return res;
     }
   }
 
@@ -100,14 +48,13 @@ Future<List<_R>> _runVoice(String raw) async {
     if (w != null && a != null) {
       final wt = double.parse(w.group(1)!);
       final an = double.parse(a.group(1)!);
-      if (an <= 0 || an >= 90) {
-        return [const _R('Angle 0 se 90 ke beech bolo', 3)];
+      if (!wt.isFinite || wt<=0 || !an.isFinite || an <= 0 || an > 90) {
+        return [const _R('Angle from horizontal must be greater than 0 and at most 90 degrees', 3)];
       }
       final ten = wt / (2 * math.sin(an * math.pi / 180));
       return [
-        _R('Load ${_f(wt)} ton, 2 leg, ${_f(an, 0)} deg'),
-        _R('Har leg par: ${_f(ten)} ton', an >= 60 ? 1 : (an >= 45 ? 2 : 3)),
-        _R('Wire rope sling kam se kam: ${_rope2(ten)}', 1),
+        _R('Recognized load ${_f(wt)} metric tonne; assumed symmetric 2 legs, ${_f(an, 0)} degrees FROM HORIZONTAL. Confirm geometry and CG in Sling Calculator.',2),
+        _R('Preliminary tension per leg: ${_f(ten)} tonne-force',2),
         const _R('Estimate hai. Sling tag se verify karo', 2),
       ];
     }
@@ -171,6 +118,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
           border: OutlineInputBorder(),
         ),
         onSubmitted: (_) => _run(),
+        onChanged:(_)=>setState(()=>out=[]),
       ),
       const SizedBox(height: 8),
       FilledButton(onPressed: _run, child: const Text('Chalao')),

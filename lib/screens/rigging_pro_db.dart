@@ -1,3 +1,6 @@
+import 'dart:convert';
+import '../services/backup_service.dart';
+import '../services/crane_chart_rules.dart';
 import 'package:sqflite/sqflite.dart';
 
 class ChartHit {
@@ -58,40 +61,38 @@ class ProDb {
         orderBy: 'boom ASC, radius ASC');
   }
 
-  static Future<ChartHit?> lookup(
-      String crane, double boom, double radius) async {
-    final d = await _open();
-    final r = await d.query('chart',
-        where: 'crane = ? AND boom = ? AND radius >= ?',
-        whereArgs: [crane, boom, radius],
-        orderBy: 'radius ASC',
-        limit: 1);
-    if (r.isEmpty) return null;
-    return ChartHit((r.first['radius'] as num).toDouble(),
-        (r.first['capacity'] as num).toDouble());
+  static Future<ChartHit?> lookup(String crane,double boom,double radius) async {
+    final rows=await allRows(crane);
+    if(CraneChartRules.verifiedRows(rows)==null)return null;
+    final hit=CraneChartRules.exactRow(rows,boom,radius);
+    return hit==null?null:ChartHit((hit['radius'] as num).toDouble(),(hit['capacity'] as num).toDouble());
   }
 
-  static Future<void> replaceChart(
-      String crane, String note, List<List<double>> data) async {
-    final d = await _open();
-    final b = d.batch();
-    b.delete('chart', where: 'crane = ?', whereArgs: [crane]);
-    for (final r in data) {
-      b.insert('chart', {
-        'crane': crane,
-        'boom': r[0],
-        'radius': r[1],
-        'capacity': r[2],
-        'note': note,
-      });
-    }
-    await b.commit(noResult: true);
-  }
+  static Future<void> replaceChart(String crane,String note,List<List<double>> data,{String? previousName}) =>
+    BackupService.withDatabases((db)=>replaceChartTo(db,crane,note,data,previousName:previousName));
 
-  static Future<void> deleteCrane(String crane) async {
-    final d = await _open();
-    await d.delete('chart', where: 'crane = ?', whereArgs: [crane]);
+  static Future<void> replaceChartTo(Database db,String crane,String note,List<List<double>> data,{String? previousName}) async {
+    if(crane.trim().isEmpty)throw ArgumentError('Chart name required.');
+    CraneChartRules.validateRows(data);
+    await db.transaction((tx)async{
+      final names={crane,if(previousName!=null)previousName};
+      for(final name in names){
+        final old=await tx.rawQuery('SELECT * FROM pro.chart WHERE crane = ?',[name]);
+        if(old.isNotEmpty)await _archive(tx,name,old,'REPLACED');
+        await tx.rawDelete('DELETE FROM pro.chart WHERE crane = ?',[name]);
+      }
+      for(final r in data){await tx.rawInsert('INSERT INTO pro.chart (crane,boom,radius,capacity,note) VALUES (?,?,?,?,?)',[crane,r[0],r[1],r[2],note]);}
+    });
   }
+  static Future<void> _archive(DatabaseExecutor tx,String name,List<Map<String,Object?>> rows,String reason)=>tx.insert('SafetyRecords',{
+    'recordType':'Crane Chart Archive','title':name,'detailsJson':jsonEncode({'version':1,'reason':reason,'rows':rows}),'createdAt':DateTime.now().toUtc().toIso8601String()
+  }).then((_){});
+  static Future<void> deleteCrane(String crane)=>BackupService.withDatabases((db)=>db.transaction((tx)async{
+    final rows=await tx.rawQuery('SELECT * FROM pro.chart WHERE crane = ?',[crane]);
+    if(rows.isNotEmpty)await _archive(tx,crane,rows,'WITHDRAWN');
+    await tx.rawDelete('DELETE FROM pro.chart WHERE crane = ?',[crane]);
+  }));
+  static Future<List<Map<String,Object?>>> chartHistory()=>BackupService.withDatabases((db)=>db.query('SafetyRecords',where:'recordType = ?',whereArgs:['Crane Chart Archive'],orderBy:'id DESC'));
 
   static Future<List<Map<String, Object?>>> certs() async {
     final d = await _open();
